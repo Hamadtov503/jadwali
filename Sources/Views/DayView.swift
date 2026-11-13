@@ -14,6 +14,19 @@ struct DayView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     DayStrip(selectedDay: $selectedDay, today: today)
+                    if items.isEmpty && !store.isSchoolDay(selectedDay) {
+                        VStack(spacing: 12) {
+                            Image(systemName: "sun.max.fill")
+                                .font(.system(size: 40))
+                                .foregroundColor(Theme.orange)
+                            Text("إجازة نهاية الأسبوع")
+                                .font(.system(.title3, design: .rounded).weight(.semibold))
+                                .foregroundColor(Theme.fg)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 40)
+                        .card(SubjectColor.orange.soft)
+                    } else {
                     SummaryCard(items: items, isToday: isToday, now: now, day: selectedDay)
 
                     if items.isEmpty {
@@ -31,6 +44,7 @@ struct DayView: View {
                                          now: now)
                             }
                         }
+                    }
                     }
                 }
                 .padding(.horizontal, 16)

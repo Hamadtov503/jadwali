@@ -18,10 +18,11 @@ struct SettingsView: View {
             Form {
                 Section(header: Text("المواد الدراسية")) {
                     ForEach(s.subjects, id: \.self) { name in
-                        Text(name)
+                        label(name, "book.fill", Theme.blue)
                     }
                     .onDelete { s.subjects.remove(atOffsets: $0) }
-                    HStack {
+                    HStack(spacing: 12) {
+                        SettingIcon(name: "text.book.closed.fill", color: Theme.muted)
                         TextField("مادة جديدة", text: $newSubject)
                             .onSubmit(addSubject)
                         Button(action: addSubject) {
@@ -39,14 +40,12 @@ struct SettingsView: View {
                         NavigationLink {
                             ClassDetailView(schoolClass: $c)
                         } label: {
-                            HStack(spacing: 10) {
-                                Circle().fill(c.color.main).frame(width: 14, height: 14)
-                                Text(c.name)
-                            }
+                            label(c.name, "person.3.fill", c.color.main)
                         }
                     }
                     .onDelete { s.classes.remove(atOffsets: $0) }
-                    HStack {
+                    HStack(spacing: 12) {
+                        SettingIcon(name: "person.3", color: Theme.muted)
                         TextField("فصل جديد", text: $newClass)
                             .onSubmit(addClass)
                         Button(action: addClass) {
@@ -60,29 +59,32 @@ struct SettingsView: View {
                 }
 
                 Section(header: Text("اليوم الدراسي")) {
-                    DatePicker("بداية الدوام", selection: dayStartBinding, displayedComponents: .hourAndMinute)
+                    DatePicker(selection: dayStartBinding, displayedComponents: .hourAndMinute) {
+                        label("بداية الدوام", "sunrise.fill", Theme.orange)
+                    }
                     Stepper(value: periodsBinding, in: 1...12) {
-                        row("عدد الحصص", Fmt.n(s.periodsPerDay))
+                        row("عدد الحصص", Fmt.n(s.periodsPerDay), "list.number", Theme.green)
                     }
                     Stepper(value: $s.periodLength, in: 20...120, step: 5) {
-                        row("مدة الحصة", Fmt.duration(s.periodLength))
+                        row("مدة الحصة", Fmt.duration(s.periodLength), "hourglass", Theme.blue)
                     }
                     Stepper(value: $s.passing, in: 0...30, step: 5) {
-                        row("بين الحصص", s.passing == 0 ? "بدون" : Fmt.duration(s.passing))
+                        row("بين الحصص", s.passing == 0 ? "بدون" : Fmt.duration(s.passing),
+                            "arrow.left.arrow.right", SubjectColor.teal.main)
                     }
                 }
 
                 if s.periodsPerDay > 1 {
                     Section(header: Text("الفسحة")) {
-                        Toggle("فسحة", isOn: $s.hasBreak)
+                        Toggle(isOn: $s.hasBreak) {
+                            label("فسحة", "cup.and.saucer.fill", Theme.orange)
+                        }
                         if s.hasBreak {
-                            Picker("بعد الحصة", selection: $s.breakAfter) {
-                                ForEach(1..<s.periodsPerDay, id: \.self) { n in
-                                    Text(ordinal(n)).tag(n)
-                                }
+                            Stepper(value: $s.breakAfter, in: 1...(s.periodsPerDay - 1)) {
+                                row("بعد الحصة", ordinal(s.breakAfter), "arrow.turn.down.left", SubjectColor.purple.main)
                             }
                             Stepper(value: $s.breakLength, in: 5...60, step: 5) {
-                                row("مدة الفسحة", Fmt.duration(s.breakLength))
+                                row("مدة الفسحة", Fmt.duration(s.breakLength), "timer", SubjectColor.pink.main)
                             }
                         }
                     }
@@ -90,17 +92,19 @@ struct SettingsView: View {
 
                 Section(header: Text("أيام الدراسة")) {
                     ForEach(0..<7, id: \.self) { d in
-                        Toggle(Weekdays.names[d], isOn: dayBinding(d))
+                        Toggle(isOn: dayBinding(d)) {
+                            label(Weekdays.names[d], s.schoolDays.contains(d) ? "calendar" : "sun.max.fill",
+                                  s.schoolDays.contains(d) ? Theme.green : SubjectColor.yellow.main)
+                        }
                     }
                 }
 
                 Section(header: Text("توقيت الحصص")) {
                     let slots = s.periods()
                     ForEach(Array(slots.enumerated()), id: \.offset) { i, slot in
-                        row("الحصة \(Fmt.n(i + 1))", Fmt.range(slot.start, slot.end))
+                        row("الحصة \(Fmt.n(i + 1))", Fmt.range(slot.start, slot.end), "bell.fill", Theme.blue)
                         if let b = s.breakSlot(), i + 1 == s.breakAfter {
-                            row("الفسحة", Fmt.range(b.start, b.end))
-                                .foregroundColor(SubjectColor.orange.ink)
+                            row("الفسحة", Fmt.range(b.start, b.end), "cup.and.saucer.fill", Theme.orange)
                         }
                     }
                     if slots.count < s.periodsPerDay {
@@ -111,7 +115,10 @@ struct SettingsView: View {
 
                 Section {
                     Button(role: .destructive) { confirmClear = true } label: {
-                        Text("حذف كل الحصص")
+                        HStack(spacing: 12) {
+                            SettingIcon(name: "trash.fill", color: .red)
+                            Text("حذف كل الحصص")
+                        }
                     }
                 }
             }
@@ -163,8 +170,16 @@ struct SettingsView: View {
         newClass = ""
     }
 
-    private func row(_ title: String, _ value: String) -> some View {
-        HStack {
+    private func label(_ title: String, _ icon: String, _ color: Color) -> some View {
+        HStack(spacing: 12) {
+            SettingIcon(name: icon, color: color)
+            Text(title)
+        }
+    }
+
+    private func row(_ title: String, _ value: String, _ icon: String, _ color: Color) -> some View {
+        HStack(spacing: 12) {
+            SettingIcon(name: icon, color: color)
             Text(title)
             Spacer()
             Text(value)
@@ -220,7 +235,10 @@ struct ClassDetailView: View {
     var body: some View {
         Form {
             Section {
-                TextField("اسم الفصل", text: $schoolClass.name)
+                HStack(spacing: 12) {
+                    SettingIcon(name: "person.3.fill", color: schoolClass.color.main)
+                    TextField("اسم الفصل", text: $schoolClass.name)
+                }
             }
             Section(header: Text("اللون")) {
                 ColorGrid(selection: $schoolClass.color)
@@ -228,5 +246,19 @@ struct ClassDetailView: View {
         }
         .navigationTitle(schoolClass.name)
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+/// أيقونة ملونة قبل كل خيار في الإعدادات.
+struct SettingIcon: View {
+    let name: String
+    let color: Color
+
+    var body: some View {
+        Image(systemName: name)
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundColor(.white)
+            .frame(width: 30, height: 30)
+            .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(color))
     }
 }

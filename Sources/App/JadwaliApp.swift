@@ -30,6 +30,7 @@ struct JadwaliApp: App {
                 .environment(\.layoutDirection, .rightToLeft)
                 .environment(\.locale, Fmt.locale)
                 .accentColor(Theme.blue)
+                .preferredColorScheme(.light)
         }
     }
 }

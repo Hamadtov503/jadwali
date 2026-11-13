@@ -24,6 +24,7 @@ targets:
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UIRequiresFullScreen: true
+        UIUserInterfaceStyle: Light
         ITSAppUsesNonExemptEncryption: false
     settings:
       base:
