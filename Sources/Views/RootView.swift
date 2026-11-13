@@ -49,7 +49,7 @@ struct RootView: View {
                             .transition(.move(edge: .leading))
                     } else {
                         WeekView(onTap: { assign($0, $1) },
-                                 onClear: { withAnimation(.easeOut(duration: 0.18)) { confirmClear = true } })
+                                 onClear: { confirmClear = true })
                             .id("week-page")
                             .transition(.move(edge: .trailing))
                     }
@@ -64,19 +64,16 @@ struct RootView: View {
                                  var t = Transaction()
                                  t.disablesAnimations = true
                                  withTransaction(t) { store.clearAll() }
-                                 withAnimation(.easeOut(duration: 0.15)) { confirmClear = false }
                              },
-                             onNo: { withAnimation(.easeOut(duration: 0.15)) { confirmClear = false } })
-                    .transition(.opacity)
+                             onDismissed: { confirmClear = false })
                     .zIndex(2)
             }
 
             if let target = assigning {
                 AssignPopup(target: target,
                             onClose: closePopup,
-                            onSettings: { closePopup(); showSettings = true },
-                            onDetails: { item in closePopup(); editing = EditorTarget(item: item, isNew: false) })
-                    .transition(.opacity)
+                            onSettings: { showSettings = true },
+                            onDetails: { item in editing = EditorTarget(item: item, isNew: false) })
                     .zIndex(1)
             }
         }
@@ -198,10 +195,10 @@ struct RootView: View {
     // MARK: - Actions
 
     private func assign(_ day: Int, _ period: Int) {
-        withAnimation(.easeOut(duration: 0.18)) { assigning = AssignTarget(day: day, period: period) }
+        assigning = AssignTarget(day: day, period: period)
     }
 
     private func closePopup() {
-        withAnimation(.easeOut(duration: 0.15)) { assigning = nil }
+        assigning = nil
     }
 }
