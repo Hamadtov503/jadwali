@@ -85,7 +85,7 @@ struct AssignPopup: View {
                 if let e = existing {
                     HStack(spacing: 10) {
                         Button {
-                            store.delete(e.id)
+                            quietly { store.delete(e.id) }
                             onClose()
                         } label: {
                             Label("إفراغ الحصة", systemImage: "trash")
@@ -148,7 +148,14 @@ struct AssignPopup: View {
 
     private func pick(_ c: SchoolClass) {
         guard let subj = chosenSubject else { return }
-        store.assign(day: target.day, period: target.period, subject: subj, schoolClass: c)
+        quietly { store.assign(day: target.day, period: target.period, subject: subj, schoolClass: c) }
         onClose()
+    }
+
+    /// تغيير الجدول بلا حركة، حتى لا يومض الجدول خلف النافذة وهي تُغلق.
+    private func quietly(_ change: () -> Void) {
+        var t = Transaction()
+        t.disablesAnimations = true
+        withTransaction(t, change)
     }
 }
