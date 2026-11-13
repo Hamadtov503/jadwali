@@ -17,6 +17,7 @@ struct RootView: View {
     @AppStorage("viewMode") private var modeRaw: String = ViewMode.day.rawValue
     @State private var selectedDay = Weekdays.weekday(of: Date())
     @State private var editing: EditorTarget?
+    @State private var showSettings = false
 
     private var mode: ViewMode { ViewMode(rawValue: modeRaw) ?? .day }
 
@@ -29,6 +30,12 @@ struct RootView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
                     .padding(.bottom, 12)
+                    .sheet(isPresented: $showSettings) {
+                        SettingsView(settings: store.settings)
+                            .environmentObject(store)
+                            .environment(\.layoutDirection, .rightToLeft)
+                            .environment(\.locale, Fmt.locale)
+                    }
 
                 if store.isExample {
                     exampleBanner
@@ -59,20 +66,32 @@ struct RootView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 8) {
-                    Text("جدولي الدراسي")
-                        .font(.system(size: 26, weight: .bold, design: .rounded))
-                        .foregroundColor(Theme.fg)
-                    HStack(spacing: 4) {
-                        Circle().fill(Theme.green).frame(width: 8, height: 8)
-                        Circle().fill(Theme.orange).frame(width: 8, height: 8)
-                        Circle().fill(Theme.blue).frame(width: 8, height: 8)
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 8) {
+                        Text("جدولي الدراسي")
+                            .font(.system(size: 26, weight: .bold, design: .rounded))
+                            .foregroundColor(Theme.fg)
+                        HStack(spacing: 4) {
+                            Circle().fill(Theme.green).frame(width: 8, height: 8)
+                            Circle().fill(Theme.orange).frame(width: 8, height: 8)
+                            Circle().fill(Theme.blue).frame(width: 8, height: 8)
+                        }
                     }
+                    Text(Fmt.today())
+                        .font(.subheadline)
+                        .foregroundColor(Theme.muted)
                 }
-                Text(Fmt.today())
-                    .font(.subheadline)
-                    .foregroundColor(Theme.muted)
+                Spacer()
+                Button { showSettings = true } label: {
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(Theme.fg)
+                        .frame(width: 42, height: 42)
+                        .background(Circle().fill(Theme.surface2))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("الإعدادات")
             }
 
             HStack(spacing: 2) {
@@ -107,7 +126,7 @@ struct RootView: View {
                 .font(.subheadline.weight(.medium))
                 .foregroundColor(SubjectColor.orange.ink)
             Spacer()
-            Button("مسح الأمثلة") { withAnimation { store.clearExamples() } }
+            Button("مسح الأمثلة") { withAnimation { store.clearAll() } }
                 .font(.footnote.weight(.semibold))
                 .foregroundColor(Theme.fg)
                 .padding(.horizontal, 14)
@@ -121,7 +140,7 @@ struct RootView: View {
     }
 
     private var addButton: some View {
-        Button { add(mode == .day ? selectedDay : Weekdays.weekday(of: Date())) } label: {
+        Button { add(mode == .day ? selectedDay : Weekdays.weekday(of: Date()), nil) } label: {
             HStack(spacing: 8) {
                 Image(systemName: "plus")
                     .font(.system(size: 16, weight: .bold))
@@ -143,10 +162,17 @@ struct RootView: View {
         editing = EditorTarget(item: item, isNew: false)
     }
 
-    private func add(_ day: Int) {
-        let start = store.suggestedStart(on: day)
-        let item = ClassItem(subject: "", weekday: day, start: start,
-                             end: min(start + 45, 23 * 60 + 59), color: store.nextColor)
+    private func add(_ day: Int, _ period: Int?) {
+        let slots = store.settings.periods()
+        var item = ClassItem(subject: "", weekday: day, start: 0, end: 0, color: store.nextColor)
+        if let n = period ?? store.freePeriod(on: day), n >= 1, n <= slots.count {
+            item.period = n
+            item.start = slots[n - 1].start
+            item.end = slots[n - 1].end
+        } else {
+            item.start = store.suggestedStart(on: day)
+            item.end = min(item.start + store.settings.periodLength, 23 * 60 + 59)
+        }
         editing = EditorTarget(item: item, isNew: true)
     }
 }

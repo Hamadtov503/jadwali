@@ -4,13 +4,50 @@ struct DayView: View {
     @EnvironmentObject var store: Store
     @Binding var selectedDay: Int
     var onEdit: (ClassItem) -> Void
-    var onAdd: (Int) -> Void
+    var onAdd: (Int, Int?) -> Void
+
+    /// عنصر في الخط الزمني: حصة مسجّلة أو حصة فارغة من إعدادات اليوم الدراسي.
+    enum Entry: Identifiable {
+        case lesson(ClassItem)
+        case free(period: Int, start: Int, end: Int)
+
+        var id: String {
+            switch self {
+            case .lesson(let c): return c.id.uuidString
+            case .free(let p, _, _): return "free-\(p)"
+            }
+        }
+        var start: Int {
+            switch self {
+            case .lesson(let c): return c.start
+            case .free(_, let s, _): return s
+            }
+        }
+        var end: Int {
+            switch self {
+            case .lesson(let c): return c.end
+            case .free(_, _, let e): return e
+            }
+        }
+    }
+
+    private func entries(for items: [ClassItem]) -> [Entry] {
+        var out = items.map { Entry.lesson($0) }
+        if store.isSchoolDay(selectedDay) && !store.isExample {
+            for (i, slot) in store.settings.periods().enumerated() {
+                let busy = items.contains { $0.start < slot.end && slot.start < $0.end }
+                if !busy { out.append(.free(period: i + 1, start: slot.start, end: slot.end)) }
+            }
+        }
+        return out.sorted { $0.start < $1.start }
+    }
 
     var body: some View {
         TimelineView(.periodic(from: Date(), by: 30)) { context in
             let today = Weekdays.weekday(of: context.date)
             let now = Weekdays.minutes(of: context.date)
             let items = store.classes(on: selectedDay)
+            let list = entries(for: items)
             let isToday = selectedDay == today
 
             ScrollView {
@@ -18,19 +55,26 @@ struct DayView: View {
                     DayStrip(selectedDay: $selectedDay, today: today)
                     SummaryCard(items: items, isToday: isToday, now: now, day: selectedDay)
 
-                    if items.isEmpty {
+                    if list.isEmpty {
                         emptyState(isToday: isToday)
                     } else {
                         VStack(alignment: .leading, spacing: 10) {
-                            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                            ForEach(Array(list.enumerated()), id: \.element.id) { index, entry in
                                 if index > 0 {
-                                    let gap = item.start - items[index - 1].end
-                                    if gap >= 5 { GapRow(minutes: gap) }
+                                    let gap = entry.start - list[index - 1].end
+                                    if gap >= 10 { GapRow(minutes: gap) }
                                 }
-                                ClassRow(item: item,
-                                         state: rowState(item, isToday: isToday, now: now),
-                                         now: now,
-                                         onTap: { onEdit(item) })
+                                switch entry {
+                                case .lesson(let item):
+                                    ClassRow(item: item,
+                                             state: rowState(start: item.start, end: item.end, isToday: isToday, now: now),
+                                             now: now,
+                                             onTap: { onEdit(item) })
+                                case .free(let period, let start, let end):
+                                    FreePeriodRow(period: period, start: start, end: end,
+                                                  isPast: rowState(start: start, end: end, isToday: isToday, now: now) == .past,
+                                                  onTap: { onAdd(selectedDay, period) })
+                                }
                             }
                         }
                     }
@@ -41,10 +85,10 @@ struct DayView: View {
         }
     }
 
-    private func rowState(_ item: ClassItem, isToday: Bool, now: Int) -> ClassRow.RowState {
+    private func rowState(start: Int, end: Int, isToday: Bool, now: Int) -> ClassRow.RowState {
         guard isToday else { return .upcoming }
-        if now >= item.end { return .past }
-        if now >= item.start { return .now }
+        if now >= end { return .past }
+        if now >= start { return .now }
         return .upcoming
     }
 
@@ -53,7 +97,7 @@ struct DayView: View {
             Text(isToday ? "لا توجد حصص اليوم" : "لا توجد حصص يوم \(Weekdays.names[selectedDay])")
                 .font(.system(.headline, design: .rounded))
                 .foregroundColor(Theme.fg)
-            Button("إضافة حصة") { onAdd(selectedDay) }
+            Button("إضافة حصة") { onAdd(selectedDay, nil) }
                 .font(.subheadline.weight(.semibold))
                 .foregroundColor(.white)
                 .padding(.horizontal, 20)
@@ -213,6 +257,51 @@ struct GapRow: View {
     }
 }
 
+struct FreePeriodRow: View {
+    let period: Int
+    let start: Int
+    let end: Int
+    let isPast: Bool
+    let onTap: () -> Void
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(Fmt.short(start))
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundColor(Theme.muted)
+                Text(Fmt.short(end))
+                    .font(.caption.monospacedDigit())
+                    .foregroundColor(Theme.muted)
+            }
+            .frame(width: 52, alignment: .leading)
+
+            Button(action: onTap) {
+                HStack {
+                    Text("الحصة \(period)")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundColor(Theme.muted)
+                    Spacer()
+                    Image(systemName: "plus.circle")
+                        .font(.system(size: 18))
+                        .foregroundColor(Theme.muted)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .frame(maxWidth: .infinity)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
+                        .stroke(Theme.line, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                )
+                .contentShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("إضافة حصة في الحصة \(period)")
+        }
+        .opacity(isPast ? 0.5 : 1)
+    }
+}
+
 struct ClassRow: View {
     enum RowState { case past, now, upcoming }
 
@@ -263,8 +352,10 @@ struct ClassRow: View {
                         .background(Capsule().fill(item.color.soft))
                 }
             }
-            if !item.meta.isEmpty {
-                Text(item.meta)
+            let metaLine = ([item.period.map { "الحصة \($0)" }].compactMap { $0 } + (item.meta.isEmpty ? [] : [item.meta]))
+                .joined(separator: " · ")
+            if !metaLine.isEmpty {
+                Text(metaLine)
                     .font(.footnote)
                     .foregroundColor(Theme.muted)
             }

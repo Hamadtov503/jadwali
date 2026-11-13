@@ -24,32 +24,78 @@ struct ClassItem: Codable, Identifiable, Equatable {
     var room: String = ""
     var teacher: String = ""
     var color: SubjectColor = .blue
+    /// رقم الحصة (يبدأ من 1). nil = وقت مخصص.
+    var period: Int? = nil
 
     var duration: Int { end - start }
     var meta: String { [room, teacher].filter { !$0.isEmpty }.joined(separator: " · ") }
+
+    func overlaps(_ other: ClassItem) -> Bool {
+        weekday == other.weekday && start < other.end && other.start < end
+    }
+}
+
+/// إعدادات اليوم الدراسي.
+struct SchoolSettings: Codable, Equatable {
+    var dayStart = 7 * 60
+    var periodsPerDay = 7
+    var periodLength = 45
+    var passing = 5
+    var hasBreak = true
+    var breakAfter = 3
+    var breakLength = 25
+    var schoolDays: [Int] = [0, 1, 2, 3, 4]
+
+    typealias Slot = (start: Int, end: Int)
+
+    func periods() -> [Slot] {
+        var out: [Slot] = []
+        var t = dayStart
+        let count = max(periodsPerDay, 1)
+        for i in 1...count {
+            let end = t + periodLength
+            if end > 24 * 60 { break }
+            out.append((start: t, end: end))
+            t = end
+            if i < count {
+                t += (hasBreak && i == breakAfter) ? breakLength : passing
+            }
+        }
+        return out
+    }
+
+    /// موعد الفسحة إن وُجدت.
+    func breakSlot() -> Slot? {
+        let p = periods()
+        guard hasBreak, breakAfter >= 1, breakAfter < p.count else { return nil }
+        return (start: p[breakAfter - 1].end, end: p[breakAfter].start)
+    }
 }
 
 extension ClassItem {
     static let examples: [ClassItem] = {
-        let rows: [(String, Int, Int, Int, String, String, SubjectColor)] = [
-            ("رياضيات", 0, 450, 495, "قاعة 12", "أ. سالم", .blue),
-            ("فيزياء", 0, 500, 545, "مختبر 2", "أ. خالد", .green),
-            ("لغة عربية", 0, 570, 615, "قاعة 12", "أ. ناصر", .orange),
-            ("لغة إنجليزية", 0, 620, 665, "قاعة 7", "أ. فهد", .blue),
-            ("كيمياء", 1, 450, 495, "مختبر 1", "أ. عبدالله", .green),
-            ("رياضيات", 1, 500, 545, "قاعة 12", "أ. سالم", .blue),
-            ("حاسب آلي", 1, 570, 660, "معمل الحاسب", "أ. ماجد", .orange),
-            ("أحياء", 2, 450, 495, "مختبر 3", "أ. يوسف", .green),
-            ("لغة عربية", 2, 500, 545, "قاعة 12", "أ. ناصر", .orange),
-            ("رياضيات", 2, 570, 615, "قاعة 12", "أ. سالم", .blue),
-            ("فيزياء", 3, 450, 495, "مختبر 2", "أ. خالد", .green),
-            ("لغة إنجليزية", 3, 500, 545, "قاعة 7", "أ. فهد", .blue),
-            ("تربية بدنية", 3, 570, 615, "الصالة", "أ. سعد", .orange),
-            ("كيمياء", 4, 450, 495, "مختبر 1", "أ. عبدالله", .green),
-            ("لغة عربية", 4, 500, 545, "قاعة 12", "أ. ناصر", .orange),
-            ("رياضيات", 4, 570, 615, "قاعة 12", "أ. سالم", .blue),
+        let rows: [(String, Int, Int, String, String, SubjectColor)] = [
+            ("رياضيات", 0, 1, "قاعة 12", "أ. سالم", .blue),
+            ("فيزياء", 0, 2, "مختبر 2", "أ. خالد", .green),
+            ("لغة عربية", 0, 3, "قاعة 12", "أ. ناصر", .orange),
+            ("لغة إنجليزية", 0, 4, "قاعة 7", "أ. فهد", .blue),
+            ("كيمياء", 1, 1, "مختبر 1", "أ. عبدالله", .green),
+            ("رياضيات", 1, 2, "قاعة 12", "أ. سالم", .blue),
+            ("حاسب آلي", 1, 4, "معمل الحاسب", "أ. ماجد", .orange),
+            ("أحياء", 2, 1, "مختبر 3", "أ. يوسف", .green),
+            ("لغة عربية", 2, 2, "قاعة 12", "أ. ناصر", .orange),
+            ("رياضيات", 2, 4, "قاعة 12", "أ. سالم", .blue),
+            ("فيزياء", 3, 1, "مختبر 2", "أ. خالد", .green),
+            ("لغة إنجليزية", 3, 2, "قاعة 7", "أ. فهد", .blue),
+            ("تربية بدنية", 3, 3, "الصالة", "أ. سعد", .orange),
+            ("كيمياء", 4, 1, "مختبر 1", "أ. عبدالله", .green),
+            ("لغة عربية", 4, 2, "قاعة 12", "أ. ناصر", .orange),
+            ("رياضيات", 4, 4, "قاعة 12", "أ. سالم", .blue),
         ]
-        return rows.map { ClassItem(subject: $0.0, weekday: $0.1, start: $0.2, end: $0.3, room: $0.4, teacher: $0.5, color: $0.6) }
+        return rows.map {
+            ClassItem(subject: $0.0, weekday: $0.1, start: 0, end: 0,
+                      room: $0.3, teacher: $0.4, color: $0.5, period: $0.2)
+        }
     }()
 }
 

@@ -29,8 +29,16 @@ struct EditorView: View {
                 }
 
                 Section {
-                    DatePicker("من", selection: startBinding, displayedComponents: .hourAndMinute)
-                    DatePicker("إلى", selection: endBinding, displayedComponents: .hourAndMinute)
+                    Picker("الوقت", selection: periodBinding) {
+                        ForEach(Array(slots.enumerated()), id: \.offset) { i, slot in
+                            Text("الحصة \(i + 1) · \(Fmt.short(slot.start))–\(Fmt.short(slot.end))").tag(i + 1)
+                        }
+                        Text("وقت مخصص").tag(0)
+                    }
+                    if item.period == nil {
+                        DatePicker("من", selection: startBinding, displayedComponents: .hourAndMinute)
+                        DatePicker("إلى", selection: endBinding, displayedComponents: .hourAndMinute)
+                    }
                 }
 
                 Section {
@@ -105,6 +113,25 @@ struct EditorView: View {
 
     // MARK: - Time bindings
 
+    private var slots: [SchoolSettings.Slot] { store.settings.periods() }
+
+    private var periodBinding: Binding<Int> {
+        Binding(
+            get: { item.period ?? 0 },
+            set: { n in
+                let s = slots
+                if n >= 1 && n <= s.count {
+                    item.period = n
+                    item.start = s[n - 1].start
+                    item.end = s[n - 1].end
+                } else {
+                    item.period = nil
+                }
+                errorText = nil
+            }
+        )
+    }
+
     private func date(_ m: Int) -> Date {
         Weekdays.calendar.date(bySettingHour: m / 60, minute: m % 60, second: 0, of: Date()) ?? Date()
     }
@@ -144,6 +171,10 @@ struct EditorView: View {
         }
         guard item.end > item.start else {
             errorText = "يجب أن يكون وقت النهاية بعد وقت البداية."
+            return
+        }
+        if !store.isExample, let other = store.conflict(with: item) {
+            errorText = "يتعارض هذا الوقت مع حصة \(other.subject) (\(Fmt.time(other.start)) – \(Fmt.time(other.end)))."
             return
         }
         store.upsert(item)

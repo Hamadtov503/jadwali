@@ -1,15 +1,17 @@
 import Foundation
 
-/// يحفظ الجدول في Application Support/classes.json على الجهاز.
+/// يحفظ الجدول والإعدادات في Application Support/classes.json على الجهاز.
 final class Store: ObservableObject {
     static let shared = Store()
 
     @Published private(set) var items: [ClassItem] = []
     @Published private(set) var isExample = false
+    @Published private(set) var settings = SchoolSettings()
 
     private struct Saved: Codable {
         var items: [ClassItem]
         var isExample: Bool
+        var settings: SchoolSettings?
     }
 
     private let url: URL
@@ -22,15 +24,32 @@ final class Store: ObservableObject {
            let saved = try? JSONDecoder().decode(Saved.self, from: data) {
             items = saved.items
             isExample = saved.isExample
+            settings = saved.settings ?? SchoolSettings()
         } else {
             items = ClassItem.examples
             isExample = true
         }
+        reflow()
     }
 
     private func save() {
-        guard let data = try? JSONEncoder().encode(Saved(items: items, isExample: isExample)) else { return }
+        let saved = Saved(items: items, isExample: isExample, settings: settings)
+        guard let data = try? JSONEncoder().encode(saved) else { return }
         try? data.write(to: url, options: .atomic)
+    }
+
+    /// يعيد حساب أوقات الحصص المرتبطة برقم حصة بعد تغيير الإعدادات.
+    private func reflow() {
+        let slots = settings.periods()
+        for i in items.indices {
+            guard let n = items[i].period else { continue }
+            if n >= 1 && n <= slots.count {
+                items[i].start = slots[n - 1].start
+                items[i].end = slots[n - 1].end
+            } else {
+                items[i].period = nil
+            }
+        }
     }
 
     // MARK: - Queries
@@ -39,13 +58,24 @@ final class Store: ObservableObject {
         items.filter { $0.weekday == day }.sorted { $0.start < $1.start }
     }
 
-    /// الأحد إلى الخميس، مع أي يوم آخر فيه حصص.
+    /// أيام الدراسة، مع أي يوم آخر فيه حصص.
     var weekDays: [Int] {
-        Array(Set([0, 1, 2, 3, 4]).union(items.map(\.weekday))).sorted()
+        let days = Set(settings.schoolDays).union(items.map(\.weekday))
+        return days.isEmpty ? [0, 1, 2, 3, 4] : days.sorted()
+    }
+
+    func isSchoolDay(_ day: Int) -> Bool {
+        settings.schoolDays.contains(day)
     }
 
     var hourRange: (start: Int, end: Int) {
-        guard let minStart = items.map(\.start).min(), let maxEnd = items.map(\.end).max() else {
+        var starts = items.map(\.start)
+        var ends = items.map(\.end)
+        if let first = settings.periods().first, let last = settings.periods().last {
+            starts.append(first.start)
+            ends.append(last.end)
+        }
+        guard let minStart = starts.min(), let maxEnd = ends.max() else {
             return (7 * 60, 14 * 60)
         }
         let s = minStart / 60 * 60
@@ -54,13 +84,27 @@ final class Store: ObservableObject {
         return (s, min(e, 24 * 60))
     }
 
+    /// أول حصة فارغة في اليوم.
+    func freePeriod(on day: Int) -> Int? {
+        let taken = classes(on: day)
+        for (i, slot) in settings.periods().enumerated() {
+            let busy = taken.contains { $0.start < slot.end && slot.start < $0.end }
+            if !busy { return i + 1 }
+        }
+        return nil
+    }
+
     func suggestedStart(on day: Int) -> Int {
-        if let last = classes(on: day).last { return min(last.end + 5, 23 * 60) }
-        return 7 * 60 + 30
+        if let last = classes(on: day).last { return min(last.end + settings.passing, 23 * 60) }
+        return settings.dayStart
     }
 
     var nextColor: SubjectColor {
         SubjectColor.allCases[(isExample ? 0 : items.count) % SubjectColor.allCases.count]
+    }
+
+    func conflict(with item: ClassItem) -> ClassItem? {
+        items.first { $0.id != item.id && $0.overlaps(item) }
     }
 
     // MARK: - Mutations
@@ -84,9 +128,15 @@ final class Store: ObservableObject {
         save()
     }
 
-    func clearExamples() {
+    func clearAll() {
         items = []
         isExample = false
+        save()
+    }
+
+    func updateSettings(_ new: SchoolSettings) {
+        settings = new
+        reflow()
         save()
     }
 }
