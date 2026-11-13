@@ -22,12 +22,29 @@
                                     <constraint firstAttribute="height" constant="130" id="Lg0-h-001"/>
                                 </constraints>
                             </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="جدولي" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Lb0-tx-001">
+                                <rect key="frame" x="150" y="509" width="93" height="41"/>
+                                <fontDescription key="fontDescription" type="boldSystem" pointSize="34"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="SplashDots" translatesAutoresizingMaskIntoConstraints="NO" id="Dt0-im-001">
+                                <rect key="frame" x="178.5" y="564" width="36" height="8"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="36" id="Dt0-w-001"/>
+                                    <constraint firstAttribute="height" constant="8" id="Dt0-h-001"/>
+                                </constraints>
+                            </imageView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" red="0.2902" green="0.2000" blue="0.1490" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="Lg0-im-001" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="Lg0-cx-001"/>
                             <constraint firstItem="Lg0-im-001" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" id="Lg0-cy-001"/>
+                            <constraint firstItem="Lb0-tx-001" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="Lb0-cx-001"/>
+                            <constraint firstItem="Lb0-tx-001" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="104" id="Lb0-cy-001"/>
+                            <constraint firstItem="Dt0-im-001" firstAttribute="centerX" secondItem="Ze5-6b-2t3" secondAttribute="centerX" id="Dt0-cx-001"/>
+                            <constraint firstItem="Dt0-im-001" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="centerY" constant="142" id="Dt0-cy-001"/>
                         </constraints>
                     </view>
                 </viewController>
@@ -38,5 +55,6 @@
     </scenes>
     <resources>
         <image name="Logo" width="512" height="512"/>
+        <image name="SplashDots" width="36" height="8"/>
     </resources>
 </document>

@@ -21,15 +21,25 @@ struct LaunchContainer: View {
     }
 }
 
-/// مطابقة لشاشة البداية (Launch.storyboard) تمامًا، حتى يظهر الشعار مع الخلفية دون انتقال.
+/// مطابقة لشاشة البداية (Launch.storyboard) تمامًا: نفس المواضع محسوبة من منتصف الشاشة الكامل،
+/// حتى لا يتحرك شيء عند الانتقال من شاشة النظام إلى التطبيق.
 struct SplashView: View {
     var body: some View {
         ZStack {
-            Theme.deepBrown.ignoresSafeArea()
+            Theme.deepBrown
             Image("Logo")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 130, height: 130)
+            Text("جدولي")
+                .font(.system(size: 34, weight: .bold))
+                .foregroundColor(.white)
+                .fixedSize()
+                .offset(y: 104)
+            Image("SplashDots")
+                .frame(width: 36, height: 8)
+                .offset(y: 142)
         }
+        .ignoresSafeArea()
     }
 }

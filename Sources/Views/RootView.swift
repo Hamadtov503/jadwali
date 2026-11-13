@@ -34,12 +34,6 @@ struct RootView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
                     .padding(.bottom, 12)
-                    .sheet(isPresented: $showSettings) {
-                        SettingsView(settings: store.settings)
-                            .environmentObject(store)
-                            .environment(\.locale, Fmt.locale)
-                .accentColor(Theme.deepBrown)
-                    }
 
                 if store.isExample {
                     exampleBanner
@@ -71,6 +65,19 @@ struct RootView: View {
                     .zIndex(1)
             }
         }
+        .sheet(isPresented: $showSettings) {
+            SettingsView(settings: store.settings)
+                .environmentObject(store)
+                .environment(\.locale, Fmt.locale)
+                .accentColor(Theme.deepBrown)
+        }
+        .background(
+            Color.clear.sheet(isPresented: $showProfile) {
+                ProfileView()
+                    .environment(\.locale, Fmt.locale)
+                    .accentColor(Theme.deepBrown)
+            }
+        )
         .sheet(item: $editing) { target in
             EditorView(target: target)
                 .environmentObject(store)
@@ -99,11 +106,6 @@ struct RootView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("الملف الشخصي")
-                        .sheet(isPresented: $showProfile) {
-                            ProfileView()
-                                .environment(\.locale, Fmt.locale)
-                .accentColor(Theme.deepBrown)
-                        }
                     circleButton("gearshape", label: "الإعدادات") { showSettings = true }
                 }
             }
