@@ -31,7 +31,7 @@ struct SettingsView: View {
 
     struct ClassRef: Identifiable { let id: UUID }
     struct SubjectRow: Identifiable { let id = UUID(); var name: String }
-    @State private var focused: UUID?
+    @FocusState private var focused: UUID?
 
     init(settings: SchoolSettings) {
         var st = settings
@@ -49,9 +49,10 @@ struct SettingsView: View {
                     ForEach($subjects) { $row in
                         HStack(spacing: 12) {
                             SettingIcon(name: "book.fill", color: Theme.blue)
-                            ArabicField(text: $row.name, placeholder: "مادة جديدة",
-                                        isFocused: focusBinding(row.id),
-                                        onSubmit: { insertSubject(after: row.id) })
+                            TextField("مادة جديدة", text: $row.name.arabicDigits)
+                                .focused($focused, equals: row.id)
+                                .submitLabel(.next)
+                                .onSubmit { insertSubject(after: row.id) }
                             addButton { insertSubject(after: row.id) }
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -70,9 +71,10 @@ struct SettingsView: View {
                             }
                             .buttonStyle(.borderless)
                             .accessibilityLabel("لون الفصل")
-                            ArabicField(text: $c.name, placeholder: "فصل جديد",
-                                        isFocused: focusBinding(c.id),
-                                        onSubmit: { insertClass(after: c.id) })
+                            TextField("فصل جديد", text: $c.name.arabicDigits)
+                                .focused($focused, equals: c.id)
+                                .submitLabel(.next)
+                                .onSubmit { insertClass(after: c.id) }
                             addButton { insertClass(after: c.id) }
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -246,15 +248,6 @@ struct SettingsView: View {
     }
 
     // MARK: - Rows
-
-    private func focusBinding(_ id: UUID) -> Binding<Bool> {
-        Binding(
-            get: { focused == id },
-            set: { on in
-                if on { focused = id } else if focused == id { focused = nil }
-            }
-        )
-    }
 
     private func addButton(_ action: @escaping () -> Void) -> some View {
         Button(action: action) {
