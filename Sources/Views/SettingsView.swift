@@ -22,9 +22,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var s: SchoolSettings
-    @State private var newSubject = ""
-    @State private var newClass = ""
-    @State private var adding: AddKind?
+    @State private var subjects: [SubjectRow]
     @State private var editingClass: ClassRef?
     @State private var exporting = false
     @State private var importing = false
@@ -32,12 +30,15 @@ struct SettingsView: View {
     @State private var backupMessage: String?
 
     struct ClassRef: Identifiable { let id: UUID }
-    @FocusState private var focus: AddKind?
-
-    enum AddKind: Hashable { case subject, klass }
+    struct SubjectRow: Identifiable { let id = UUID(); var name: String }
+    @FocusState private var focused: UUID?
 
     init(settings: SchoolSettings) {
-        _s = State(initialValue: settings)
+        var st = settings
+        if st.classes.isEmpty { st.classes = [SchoolClass(name: "", color: st.nextClassColor)] }
+        _s = State(initialValue: st)
+        let rows = settings.subjects.map { SubjectRow(name: $0) }
+        _subjects = State(initialValue: rows.isEmpty ? [SubjectRow(name: "")] : rows)
     }
 
     var body: some View {
@@ -45,57 +46,47 @@ struct SettingsView: View {
             Form {
  Group {
                 Section(header: SectionTitle("المواد الدراسية")) {
-                    listCard(kind: .subject) {
-                        ForEach(Array(s.subjects.enumerated()), id: \.element) { i, name in
-                            if i > 0 { cardDivider }
-                            HStack(spacing: 12) {
-                                SettingIcon(name: "book.fill", color: Theme.blue)
-                                Text(name).foregroundColor(Theme.fg)
-                                Spacer()
-                                Button {
-                                    withAnimation { s.subjects.removeAll { $0 == name } }
-                                } label: {
-                                    Image(systemName: "trash")
-                                        .font(.system(size: 15))
-                                        .foregroundColor(Theme.muted)
-                                        .frame(width: 36, height: 36)
-                                        .contentShape(Rectangle())
-                                }
-                                .buttonStyle(.borderless)
-                                .accessibilityLabel("حذف \(name)")
-                            }
-                            .padding(.horizontal, 16)
-                            .frame(minHeight: 50)
+                    ForEach($subjects) { $row in
+                        HStack(spacing: 12) {
+                            SettingIcon(name: "book.fill", color: Theme.blue)
+                            TextField("مادة جديدة", text: $row.name.arabicDigits)
+                                .focused($focused, equals: row.id)
+                                .submitLabel(.next)
+                                .onSubmit { insertSubject(after: row.id) }
                         }
-                        if adding == .subject || s.subjects.isEmpty {
-                            if !s.subjects.isEmpty { cardDivider }
-                            addRow("مادة جديدة", text: $newSubject, kind: .subject, icon: "book.fill", add: addSubject)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) { deleteSubject(row.id) } label: {
+                                Label("حذف", systemImage: "trash")
+                            }
                         }
                     }
                 }
 
                 Section(header: SectionTitle("الفصول")) {
-                    listCard(kind: .klass) {
-                        ForEach(Array(s.classes.enumerated()), id: \.element.id) { i, c in
-                            if i > 0 { cardDivider }
+                    ForEach($s.classes) { $c in
+                        HStack(spacing: 12) {
                             Button { editingClass = ClassRef(id: c.id) } label: {
-                                HStack(spacing: 12) {
-                                    SettingIcon(name: "person.3.fill", color: c.color.main)
-                                    Text(c.name).foregroundColor(Theme.fg)
-                                    Spacer()
-                                    Image(systemName: "chevron.left")
-                                        .font(.system(size: 13, weight: .semibold))
-                                        .foregroundColor(Theme.muted)
-                                }
-                                .padding(.horizontal, 16)
-                                .frame(minHeight: 50)
-                                .contentShape(Rectangle())
+                                SettingIcon(name: "person.3.fill", color: c.color.main)
+                            }
+                            .buttonStyle(.borderless)
+                            .accessibilityLabel("لون الفصل")
+                            TextField("فصل جديد", text: $c.name.arabicDigits)
+                                .focused($focused, equals: c.id)
+                                .submitLabel(.next)
+                                .onSubmit { insertClass(after: c.id) }
+                            Button { editingClass = ClassRef(id: c.id) } label: {
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(Theme.muted)
+                                    .frame(width: 30, height: 30)
+                                    .contentShape(Rectangle())
                             }
                             .buttonStyle(.borderless)
                         }
-                        if adding == .klass || s.classes.isEmpty {
-                            if !s.classes.isEmpty { cardDivider }
-                            addRow("فصل جديد", text: $newClass, kind: .klass, icon: "person.3.fill", add: addClass)
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) { deleteClass(c.id) } label: {
+                                Label("حذف", systemImage: "trash")
+                            }
                         }
                     }
                 }
@@ -180,6 +171,9 @@ struct SettingsView: View {
                         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
                         if let data = try? Data(contentsOf: url), store.restore(from: data) {
                             s = store.settings
+                            if s.classes.isEmpty { s.classes = [SchoolClass(name: "", color: s.nextClassColor)] }
+                            let rows = s.subjects.map { SubjectRow(name: $0) }
+                            subjects = rows.isEmpty ? [SubjectRow(name: "")] : rows
                             backupMessage = "تم استيراد النسخة الاحتياطية."
                         } else {
                             backupMessage = "الملف ليس نسخة احتياطية صالحة."
@@ -215,8 +209,12 @@ struct SettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("حفظ") {
-                        addSubject()
-                        addClass()
+                        var names: [String] = []
+                        for r in subjects {
+                            let n = trimmed(r.name)
+                            if !n.isEmpty && !names.contains(n) { names.append(n) }
+                        }
+                        s.subjects = names
                         for i in s.classes.indices { s.classes[i].name = trimmed(s.classes[i].name) }
                         s.classes.removeAll { $0.name.isEmpty }
                         store.updateSettings(s)
@@ -243,87 +241,41 @@ struct SettingsView: View {
         )
     }
 
-    private var cardDivider: some View {
-        Rectangle().fill(Theme.line).frame(height: 1).padding(.leading, 58)
-    }
-
-    /// بطاقة القائمة وتحتها مباشرة علامة الزائد، في صف واحد حتى لا تتباعدا.
-    private func listCard<Rows: View>(kind: AddKind, @ViewBuilder rows: () -> Rows) -> some View {
-        let isEmpty = kind == .subject ? s.subjects.isEmpty : s.classes.isEmpty
-        return VStack(spacing: 8) {
-            VStack(spacing: 0) { rows() }
-                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface))
-            if !isEmpty {
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) { adding = kind }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { focus = kind }
-            } label: {
-                Image(systemName: "plus")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(Theme.onBg)
-                    .frame(width: 38, height: 38)
-                    .background(Circle().fill(Theme.onBg.opacity(0.08)))
-                    .contentShape(Circle())
-            }
-            .buttonStyle(.borderless)
-            .accessibilityLabel(kind == .subject ? "إضافة مادة" : "إضافة فصل")
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .listRowInsets(EdgeInsets())
-        .listRowBackground(Color.clear)
-        .listRowSeparator(.hidden)
-    }
-
-    private func addRow(_ placeholder: String, text: Binding<String>, kind: AddKind,
-                        icon: String, add: @escaping () -> Void) -> some View {
-        HStack(spacing: 12) {
-            SettingIcon(name: icon, color: Theme.green)
-            TextField(placeholder, text: text.arabicDigits)
-                .focused($focus, equals: kind)
-                .submitLabel(.done)
-                .onSubmit { add(); adding = nil }
-            Button("إضافة") { add(); adding = nil }
-                .font(.subheadline.weight(.semibold))
-                .foregroundColor(Theme.deepBrown)
-                .buttonStyle(.borderless)
-                .disabled(trimmed(text.wrappedValue).isEmpty)
-            if adding == kind {
-                Button {
-                    text.wrappedValue = ""
-                    focus = nil
-                    withAnimation(.easeInOut(duration: 0.2)) { adding = nil }
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 20))
-                        .foregroundColor(Theme.muted)
-                }
-                .buttonStyle(.borderless)
-                .accessibilityLabel("حذف الخانة")
-            }
-        }
-        .padding(.horizontal, 16)
-        .frame(minHeight: 50)
-    }
-
     private func trimmed(_ t: String) -> String {
         t.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func addSubject() {
-        let name = trimmed(newSubject)
-        guard !name.isEmpty else { return }
-        if !s.subjects.contains(name) { s.subjects.append(name) }
-        newSubject = ""
+    // MARK: - Rows
+
+    /// زر الإدخال في آخر سطر يفتح سطرًا جديدًا تحته.
+    private func insertSubject(after id: UUID) {
+        guard let i = subjects.firstIndex(where: { $0.id == id }),
+              !trimmed(subjects[i].name).isEmpty else { focused = nil; return }
+        let row = SubjectRow(name: "")
+        withAnimation(.easeInOut(duration: 0.2)) { subjects.insert(row, at: i + 1) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { focused = row.id }
     }
 
-    private func addClass() {
-        let name = trimmed(newClass)
-        guard !name.isEmpty else { return }
-        if !s.classes.contains(where: { $0.name == name }) {
-            s.classes.append(SchoolClass(name: name, color: s.nextClassColor))
+    private func deleteSubject(_ id: UUID) {
+        withAnimation {
+            subjects.removeAll { $0.id == id }
+            if subjects.isEmpty { subjects = [SubjectRow(name: "")] }
         }
-        newClass = ""
+    }
+
+    private func insertClass(after id: UUID) {
+        guard let i = s.classes.firstIndex(where: { $0.id == id }),
+              !trimmed(s.classes[i].name).isEmpty else { focused = nil; return }
+        let c = SchoolClass(name: "", color: s.nextClassColor)
+        withAnimation(.easeInOut(duration: 0.2)) { s.classes.insert(c, at: i + 1) }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { focused = c.id }
+    }
+
+    private func deleteClass(_ id: UUID) {
+        withAnimation {
+            s.classes.removeAll { $0.id == id }
+            if s.classes.isEmpty { s.classes = [SchoolClass(name: "", color: s.nextClassColor)] }
+        }
     }
 
     private func label(_ title: String, _ icon: String, _ color: Color) -> some View {
