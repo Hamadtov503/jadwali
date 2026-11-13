@@ -67,7 +67,7 @@ struct SettingsView: View {
                             .padding(.horizontal, 16)
                             .frame(minHeight: 50)
                         }
-                        if adding == .subject {
+                        if adding == .subject || s.subjects.isEmpty {
                             if !s.subjects.isEmpty { cardDivider }
                             addRow("مادة جديدة", text: $newSubject, kind: .subject, icon: "book.fill", add: addSubject)
                         }
@@ -93,7 +93,7 @@ struct SettingsView: View {
                             }
                             .buttonStyle(.borderless)
                         }
-                        if adding == .klass {
+                        if adding == .klass || s.classes.isEmpty {
                             if !s.classes.isEmpty { cardDivider }
                             addRow("فصل جديد", text: $newClass, kind: .klass, icon: "person.3.fill", add: addClass)
                         }
@@ -241,12 +241,11 @@ struct SettingsView: View {
 
     /// بطاقة القائمة وتحتها مباشرة علامة الزائد، في صف واحد حتى لا تتباعدا.
     private func listCard<Rows: View>(kind: AddKind, @ViewBuilder rows: () -> Rows) -> some View {
-        let isEmpty = (kind == .subject ? s.subjects.isEmpty : s.classes.isEmpty) && adding != kind
+        let isEmpty = kind == .subject ? s.subjects.isEmpty : s.classes.isEmpty
         return VStack(spacing: 8) {
+            VStack(spacing: 0) { rows() }
+                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface))
             if !isEmpty {
-                VStack(spacing: 0) { rows() }
-                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface))
-            }
             Button {
                 withAnimation(.easeInOut(duration: 0.2)) { adding = kind }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { focus = kind }
@@ -260,6 +259,7 @@ struct SettingsView: View {
             }
             .buttonStyle(.borderless)
             .accessibilityLabel(kind == .subject ? "إضافة مادة" : "إضافة فصل")
+            }
         }
         .frame(maxWidth: .infinity)
         .listRowInsets(EdgeInsets())
@@ -280,17 +280,19 @@ struct SettingsView: View {
                 .foregroundColor(Theme.deepBrown)
                 .buttonStyle(.borderless)
                 .disabled(trimmed(text.wrappedValue).isEmpty)
-            Button {
-                text.wrappedValue = ""
-                focus = nil
-                withAnimation(.easeInOut(duration: 0.2)) { adding = nil }
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 20))
-                    .foregroundColor(Theme.muted)
+            if adding == kind {
+                Button {
+                    text.wrappedValue = ""
+                    focus = nil
+                    withAnimation(.easeInOut(duration: 0.2)) { adding = nil }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundColor(Theme.muted)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("حذف الخانة")
             }
-            .buttonStyle(.borderless)
-            .accessibilityLabel("حذف الخانة")
         }
         .padding(.horizontal, 16)
         .frame(minHeight: 50)
