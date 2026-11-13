@@ -215,10 +215,10 @@ struct ConfirmPopup: View {
                     Button { onYes(); close(nil) } label: {
                         Text("نعم")
                             .font(.subheadline.weight(.semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(Theme.fg)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 12)
-                            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.red))
+                            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.surface2))
                     }
                     .buttonStyle(.plain)
                     Button { close(nil) } label: {

@@ -143,6 +143,12 @@ struct WeekView: View {
     @ViewBuilder
     private func cell(day: Int, period: Int, side: CGFloat, isNow: Bool) -> some View {
         let item = store.item(day: day, period: period)
+        if item == nil && period > store.settings.periodCount(on: day) {
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(UIColor(hex: 0xD8D5D0)))
+                .frame(width: side, height: side)
+                .accessibilityLabel("\(Weekdays.names[day]) لا توجد حصة \(Fmt.n(period))")
+        } else {
         Button { onTap(day, period) } label: {
             ZStack {
                 if let item = item {
@@ -178,5 +184,6 @@ struct WeekView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(Weekdays.names[day]) الحصة \(period)" + (item.map { " \($0.title)" } ?? ""))
+        }
     }
 }

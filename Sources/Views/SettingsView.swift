@@ -127,6 +127,14 @@ struct SettingsView: View {
                     }
                 }
 
+                Section(header: SectionTitle("عدد الحصص في كل يوم")) {
+                    ForEach(s.schoolDays, id: \.self) { d in
+                        Stepper(value: dayPeriodsBinding(d), in: 1...max(s.periodsPerDay, 1)) {
+                            row(Weekdays.names[d], Fmt.n(s.periodCount(on: d)), "list.number", Theme.green)
+                        }
+                    }
+                }
+
                 Section(header: SectionTitle("توقيت الحصص")) {
                     let slots = s.periods()
                     ForEach(Array(slots.enumerated()), id: \.offset) { i, slot in
@@ -322,6 +330,15 @@ struct SettingsView: View {
             set: { n in
                 s.periodsPerDay = n
                 if s.breakAfter >= n { s.breakAfter = max(1, n - 1) }
+            }
+        )
+    }
+
+    private func dayPeriodsBinding(_ d: Int) -> Binding<Int> {
+        Binding(
+            get: { s.periodCount(on: d) },
+            set: { v in
+                if v >= s.periodsPerDay { s.dayPeriods[String(d)] = nil } else { s.dayPeriods[String(d)] = v }
             }
         )
     }
