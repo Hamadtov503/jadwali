@@ -257,10 +257,9 @@ struct SettingsView: View {
     }
 
     private func deleteSubject(_ id: UUID) {
-        withAnimation {
-            subjects.removeAll { $0.id == id }
-            if subjects.isEmpty { subjects = [SubjectRow(name: "")] }
-        }
+        focused = nil
+        subjects.removeAll { $0.id == id }
+        if subjects.isEmpty { subjects = [SubjectRow(name: "")] }
     }
 
     private func insertClass(after id: UUID) {
@@ -272,10 +271,9 @@ struct SettingsView: View {
     }
 
     private func deleteClass(_ id: UUID) {
-        withAnimation {
-            s.classes.removeAll { $0.id == id }
-            if s.classes.isEmpty { s.classes = [SchoolClass(name: "", color: s.nextClassColor)] }
-        }
+        focused = nil
+        s.classes.removeAll { $0.id == id }
+        if s.classes.isEmpty { s.classes = [SchoolClass(name: "", color: s.nextClassColor)] }
     }
 
     private func label(_ title: String, _ icon: String, _ color: Color) -> some View {

@@ -47,24 +47,14 @@ struct RootView: View {
                         .padding(.bottom, 12)
                 }
 
-                // الصفحتان موجودتان دائمًا، والتنقل مجرد انزلاق بينهما.
-                GeometryReader { geo in
-                    let w = geo.size.width
-                    ZStack {
-                        DayView(selectedDay: $selectedDay)
-                            .frame(width: w)
-                            .offset(x: mode == .day ? 0 : w)
-                            .opacity(mode == .day ? 1 : 0)
-                            .allowsHitTesting(mode == .day)
-                        WeekView(onTap: { assign($0, $1) })
-                            .frame(width: w)
-                            .offset(x: mode == .week ? 0 : -w)
-                            .opacity(mode == .week ? 1 : 0)
-                            .allowsHitTesting(mode == .week)
-                    }
-                    .animation(.interactiveSpring(response: 0.5, dampingFraction: 0.9, blendDuration: 0.2), value: modeRaw)
+                // صفحتان بتمرير أفقي أصلي من النظام: سلس، ويعمل بالسحب أيضًا.
+                TabView(selection: $modeRaw) {
+                    DayView(selectedDay: $selectedDay)
+                        .tag(ViewMode.day.rawValue)
+                    WeekView(onTap: { assign($0, $1) })
+                        .tag(ViewMode.week.rawValue)
                 }
-                .clipped()
+                .tabViewStyle(.page(indexDisplayMode: .never))
             }
 
             if let target = assigning {

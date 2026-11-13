@@ -15,8 +15,25 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         UINavigationBar.appearance().compactAppearance = bar
         UITableView.appearance().backgroundColor = Theme.uiBackground
         UICollectionView.appearance().backgroundColor = Theme.uiBackground
+        clearLaunchSnapshotCache()
         _ = Store.shared
         return true
+    }
+
+    /// iOS يحتفظ بصورة لشاشة البداية القديمة (البيضاء) ولا يحدّثها عند التثبيت عبر TrollStore.
+    /// حذف ذاكرتها يجبره على رسم شاشة البداية الحالية في المرة القادمة.
+    private func clearLaunchSnapshotCache() {
+        let key = "launchCacheClearedForBuild"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? ""
+        guard UserDefaults.standard.string(forKey: key) != build else { return }
+        let fm = FileManager.default
+        if let lib = fm.urls(for: .libraryDirectory, in: .userDomainMask).first {
+            try? fm.removeItem(at: lib.appendingPathComponent("SplashBoard"))
+            if let caches = fm.urls(for: .cachesDirectory, in: .userDomainMask).first {
+                try? fm.removeItem(at: caches.appendingPathComponent("Snapshots"))
+            }
+        }
+        UserDefaults.standard.set(build, forKey: key)
     }
 }
 
