@@ -9,6 +9,7 @@ struct EditorView: View {
     @State private var errorText: String?
     @State private var confirmDelete = false
     @FocusState private var subjectFocused: Bool
+    @FocusState private var roomFocused: Bool
 
     init(target: EditorTarget) {
         _item = State(initialValue: target.item)
@@ -81,6 +82,7 @@ struct EditorView: View {
 
                 Section {
                     TextField("القاعة", text: $item.room.arabicDigits)
+                        .focused($roomFocused)
                 }
 
                 if item.classID == nil {
@@ -109,6 +111,14 @@ struct EditorView: View {
             .navigationTitle(isNew ? "حصة جديدة" : "تعديل الحصة")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    if subjectFocused || roomFocused {
+                        ArabicDigitsBar { k in
+                            if subjectFocused { item.subject += k }
+                            if roomFocused { item.room += k }
+                        }
+                    }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("حفظ", action: save)
                         .font(.body.weight(.semibold))

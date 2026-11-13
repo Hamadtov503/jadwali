@@ -38,6 +38,7 @@ struct SettingsView: View {
                                 .foregroundColor(Theme.green)
                                 .buttonStyle(.plain)
                                 .disabled(trimmed(newSubject).isEmpty)
+                            cancelButton { newSubject = "" }
                         }
                     }
                 }
@@ -63,6 +64,7 @@ struct SettingsView: View {
                                 .foregroundColor(Theme.green)
                                 .buttonStyle(.plain)
                                 .disabled(trimmed(newClass).isEmpty)
+                            cancelButton { newClass = "" }
                         }
                     }
                 }
@@ -137,6 +139,14 @@ struct SettingsView: View {
             .navigationTitle("الإعدادات")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    if focus != nil {
+                        ArabicDigitsBar { k in
+                            if focus == .subject { newSubject += k }
+                            if focus == .klass { newClass += k }
+                        }
+                    }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("حفظ") {
                         addSubject()
@@ -161,6 +171,20 @@ struct SettingsView: View {
     }
 
     // MARK: - Helpers
+
+    private func cancelButton(_ clear: @escaping () -> Void) -> some View {
+        Button {
+            clear()
+            focus = nil
+            withAnimation(.easeInOut(duration: 0.2)) { adding = nil }
+        } label: {
+            Image(systemName: "xmark.circle.fill")
+                .font(.system(size: 20))
+                .foregroundColor(Theme.muted)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("حذف الخانة")
+    }
 
     private func plusButton(_ kind: AddKind) -> some View {
         HStack {
@@ -264,6 +288,7 @@ struct SettingsView: View {
 
 struct ClassDetailView: View {
     @Binding var schoolClass: SchoolClass
+    @FocusState private var nameFocused: Bool
 
     var body: some View {
         Form {
@@ -272,6 +297,7 @@ struct ClassDetailView: View {
                 HStack(spacing: 12) {
                     SettingIcon(name: "person.3.fill", color: schoolClass.color.main)
                     TextField("اسم الفصل", text: $schoolClass.name.arabicDigits)
+                        .focused($nameFocused)
                 }
             }
             Section(header: SectionTitle("اللون")) {
@@ -283,6 +309,13 @@ struct ClassDetailView: View {
         .appFormBackground()
         .navigationTitle(schoolClass.name)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                if nameFocused {
+                    ArabicDigitsBar { schoolClass.name += $0 }
+                }
+            }
+        }
     }
 }
 

@@ -126,6 +126,27 @@ struct ColorGrid: View {
     }
 }
 
+/// صف أرقام عربية فوق لوحة المفاتيح.
+struct ArabicDigitsBar: View {
+    var onTap: (String) -> Void
+    private let keys = ["١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩", "٠", "/"]
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(keys, id: \.self) { k in
+                Button { onTap(k) } label: {
+                    Text(k)
+                        .font(.system(size: 21, weight: .medium))
+                        .foregroundColor(Theme.fg)
+                        .frame(maxWidth: .infinity, minHeight: 36)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+}
+
 /// شريحة اختيار بسيطة.
 struct Chip: View {
     let title: String
