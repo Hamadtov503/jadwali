@@ -21,31 +21,15 @@ struct LaunchContainer: View {
     }
 }
 
+/// مطابقة لشاشة البداية (Launch.storyboard) تمامًا، حتى يظهر الشعار مع الخلفية دون انتقال.
 struct SplashView: View {
-    @State private var appeared = false
-
     var body: some View {
         ZStack {
             Theme.deepBrown.ignoresSafeArea()
-            VStack(spacing: 18) {
-                Image("Logo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 130, height: 130)
-                    .scaleEffect(appeared ? 1 : 0.85)
-                Text("جدولي")
-                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                    .foregroundColor(.white)
-                HStack(spacing: 6) {
-                    Circle().fill(Theme.green).frame(width: 8, height: 8)
-                    Circle().fill(Theme.orange).frame(width: 8, height: 8)
-                    Circle().fill(Theme.blue).frame(width: 8, height: 8)
-                }
-            }
-            .opacity(appeared ? 1 : 0)
-        }
-        .onAppear {
-            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) { appeared = true }
+            Image("Logo")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 130, height: 130)
         }
     }
 }

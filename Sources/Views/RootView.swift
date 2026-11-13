@@ -14,7 +14,7 @@ struct EditorTarget: Identifiable {
 
 struct RootView: View {
     @EnvironmentObject var store: Store
-    @AppStorage("viewMode") private var modeRaw: String = ViewMode.day.rawValue
+    @State private var modeRaw: String = ViewMode.day.rawValue
     @State private var selectedDay = Weekdays.weekday(of: Date())
     @State private var editing: EditorTarget?
     @State private var showSettings = false
@@ -47,14 +47,17 @@ struct RootView: View {
                         .padding(.bottom, 12)
                 }
 
-                // صفحتان بتمرير أفقي أصلي من النظام: سلس، ويعمل بالسحب أيضًا.
-                TabView(selection: $modeRaw) {
-                    DayView(selectedDay: $selectedDay)
-                        .tag(ViewMode.day.rawValue)
-                    WeekView(onTap: { assign($0, $1) })
-                        .tag(ViewMode.week.rawValue)
+                ZStack {
+                    if mode == .day {
+                        DayView(selectedDay: $selectedDay)
+                            .transition(.move(edge: .leading))
+                    } else {
+                        WeekView(onTap: { assign($0, $1) })
+                            .transition(.move(edge: .trailing))
+                    }
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
             }
 
             if let target = assigning {
@@ -106,7 +109,8 @@ struct RootView: View {
             HStack(spacing: 2) {
                 ForEach(ViewMode.allCases) { m in
                     Button {
-                        withAnimation(.interactiveSpring(response: 0.5, dampingFraction: 0.9, blendDuration: 0.2)) { modeRaw = m.rawValue }
+                        guard modeRaw != m.rawValue else { return }
+                        withAnimation(.easeInOut(duration: 0.32)) { modeRaw = m.rawValue }
                     } label: {
                         Text(m.title)
                             .font(.subheadline.weight(.semibold))

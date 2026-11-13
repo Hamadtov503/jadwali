@@ -53,6 +53,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete latest --yes --cleanup-tag || true
-          gh release create latest Jadwali.ipa --target ${{ github.sha }} \
+          cp Jadwali.ipa "Jadwali-1.${{ github.run_number }}.ipa"
+          gh release create latest Jadwali.ipa "Jadwali-1.${{ github.run_number }}.ipa" --target ${{ github.sha }} \
             --title "جدولي — الإصدار 1.${{ github.run_number }}" \
             --notes "افتح Jadwali.ipa من الجوال واختر Open in TrollStore."

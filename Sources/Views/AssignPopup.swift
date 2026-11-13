@@ -59,10 +59,8 @@ struct AssignPopup: View {
                             Text("المادة")
                                 .font(.caption.weight(.semibold))
                                 .foregroundColor(Theme.muted)
-                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 2), spacing: 8) {
-                                ForEach(subjects, id: \.self) { name in
-                                    Chip(title: name, selected: subject == name) { subject = name }
-                                }
+                            SimpleGrid(items: subjects, columns: 2) { name in
+                                Chip(title: name, selected: subject == name) { subject = name }
                             }
                         }
                     }
@@ -73,15 +71,13 @@ struct AssignPopup: View {
                                 .font(.caption.weight(.semibold))
                                 .foregroundColor(Theme.muted)
                         }
-                        LazyVGrid(columns: columns, spacing: 8) {
-                            ForEach(classes) { c in
-                                Chip(title: c.name, color: c.color,
-                                     selected: existing?.classID == c.id && (chosenSubject ?? "") == (existing?.subject ?? "")) {
-                                    pick(c)
-                                }
-                                .opacity(chosenSubject == nil ? 0.4 : 1)
-                                .disabled(chosenSubject == nil)
+                        SimpleGrid(items: classes, columns: 3) { c in
+                            Chip(title: c.name, color: c.color,
+                                 selected: existing?.classID == c.id && (chosenSubject ?? "") == (existing?.subject ?? "")) {
+                                pick(c)
                             }
+                            .opacity(chosenSubject == nil ? 0.4 : 1)
+                            .disabled(chosenSubject == nil)
                         }
                     }
                 }

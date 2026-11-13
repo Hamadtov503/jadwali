@@ -22,10 +22,8 @@ struct EditorView: View {
  Group {
                 Section(header: SectionTitle("المادة")) {
                     if !store.settings.subjects.isEmpty {
-                        LazyVGrid(columns: grid(2), spacing: 8) {
-                            ForEach(store.settings.subjects, id: \.self) { name in
-                                Chip(title: name, selected: item.subject == name) { item.subject = name }
-                            }
+                        SimpleGrid(items: store.settings.subjects, columns: 2) { name in
+                            Chip(title: name, selected: item.subject == name) { item.subject = name }
                         }
                         .padding(.vertical, 6)
                     }
@@ -35,8 +33,7 @@ struct EditorView: View {
 
                 if !store.settings.classes.isEmpty {
                     Section(header: SectionTitle("الفصل")) {
-                        LazyVGrid(columns: grid(3), spacing: 8) {
-                            ForEach(store.settings.classes) { c in
+                        SimpleGrid(items: store.settings.classes, columns: 3) { c in
                                 Chip(title: c.name, color: c.color, selected: item.classID == c.id) {
                                     if item.classID == c.id {
                                         item.classID = nil
@@ -47,31 +44,29 @@ struct EditorView: View {
                                         item.color = c.color
                                     }
                                 }
-                            }
                         }
                         .padding(.vertical, 6)
                     }
                 }
 
                 Section(header: SectionTitle("اليوم")) {
-                    LazyVGrid(columns: grid(4), spacing: 8) {
-                        ForEach(dayChoices, id: \.self) { d in
-                            Chip(title: Weekdays.names[d], selected: item.weekday == d) {
-                                item.weekday = d
-                                errorText = nil
-                            }
+                    SimpleGrid(items: dayChoices, columns: 4) { d in
+                        Chip(title: Weekdays.names[d], selected: item.weekday == d) {
+                            item.weekday = d
+                            errorText = nil
                         }
                     }
                     .padding(.vertical, 6)
                 }
 
                 Section(header: SectionTitle("الحصة")) {
-                    LazyVGrid(columns: grid(2), spacing: 8) {
-                        ForEach(Array(slots.enumerated()), id: \.offset) { i, slot in
-                            Chip(title: "\(Fmt.n(i + 1)) · \(Fmt.range(slot.start, slot.end))",
-                                 selected: item.period == i + 1) { setPeriod(i + 1) }
+                    SimpleGrid(items: Array(1...max(slots.count, 1)) + [0], columns: 2) { n in
+                        if n == 0 {
+                            Chip(title: "وقت مخصص", selected: item.period == nil) { setPeriod(0) }
+                        } else if n <= slots.count {
+                            Chip(title: "\(Fmt.n(n)) · \(Fmt.range(slots[n - 1].start, slots[n - 1].end))",
+                                 selected: item.period == n) { setPeriod(n) }
                         }
-                        Chip(title: "وقت مخصص", selected: item.period == nil) { setPeriod(0) }
                     }
                     .padding(.vertical, 6)
                     if item.period == nil {

@@ -13,7 +13,7 @@ struct WeekView: View {
         content
             .alert("إفراغ الجدول؟", isPresented: $confirmClear) {
                 Button("نعم", role: .destructive) { withAnimation { store.clearAll() } }
-                Button("لا", role: .cancel) {}
+                Button("لا") {}
             }
     }
 
@@ -133,12 +133,12 @@ struct WeekView: View {
             Text(Fmt.range(b.start, b.end))
                 .font(.caption2.monospacedDigit())
         }
-        .foregroundColor(SubjectColor.blue.ink)
+        .foregroundColor(.white)
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color(UIColor(hex: 0xC5DDF8)))
+                .fill(Color(UIColor(hex: 0x1F4E8C)))
         )
     }
 

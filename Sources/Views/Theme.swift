@@ -141,8 +141,7 @@ struct ColorGrid: View {
     @Binding var selection: SubjectColor
 
     var body: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 4), spacing: 12) {
-            ForEach(SubjectColor.allCases) { c in
+        SimpleGrid(items: SubjectColor.allCases, columns: 4, spacing: 12) { c in
                 let on = selection == c
                 Button { selection = c } label: {
                     ZStack {
@@ -161,9 +160,35 @@ struct ColorGrid: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(c.title)
                 .accessibilityAddTraits(on ? .isSelected : [])
-            }
         }
         .padding(.vertical, 6)
+    }
+}
+
+/// شبكة بسيطة من صفوف وأعمدة. LazyVGrid داخل قوائم الإعدادات في الاتجاه العربي
+/// كانت تستقبل اللمسة في المربع المقابل، فاستُبدلت بهذه.
+struct SimpleGrid<Item: Hashable, Cell: View>: View {
+    let items: [Item]
+    let columns: Int
+    var spacing: CGFloat = 8
+    @ViewBuilder let cell: (Item) -> Cell
+
+    var body: some View {
+        let rows = (items.count + columns - 1) / columns
+        VStack(spacing: spacing) {
+            ForEach(0..<rows, id: \.self) { r in
+                HStack(spacing: spacing) {
+                    ForEach(0..<columns, id: \.self) { c in
+                        let i = r * columns + c
+                        if i < items.count {
+                            cell(items[i]).frame(maxWidth: .infinity)
+                        } else {
+                            Color.clear.frame(maxWidth: .infinity, maxHeight: 1)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

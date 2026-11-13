@@ -53,6 +53,7 @@ struct SettingsView: View {
                                 .focused($focused, equals: row.id)
                                 .submitLabel(.next)
                                 .onSubmit { insertSubject(after: row.id) }
+                            addButton { insertSubject(after: row.id) }
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) { deleteSubject(row.id) } label: {
@@ -74,14 +75,7 @@ struct SettingsView: View {
                                 .focused($focused, equals: c.id)
                                 .submitLabel(.next)
                                 .onSubmit { insertClass(after: c.id) }
-                            Button { editingClass = ClassRef(id: c.id) } label: {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(Theme.muted)
-                                    .frame(width: 30, height: 30)
-                                    .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.borderless)
+                            addButton { insertClass(after: c.id) }
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) { deleteClass(c.id) } label: {
@@ -246,6 +240,18 @@ struct SettingsView: View {
     }
 
     // MARK: - Rows
+
+    private func addButton(_ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: "plus.circle.fill")
+                .font(.system(size: 22))
+                .foregroundColor(Theme.deepBrown)
+                .frame(width: 34, height: 34)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.borderless)
+        .accessibilityLabel("إضافة")
+    }
 
     /// زر الإدخال في آخر سطر يفتح سطرًا جديدًا تحته.
     private func insertSubject(after id: UUID) {
