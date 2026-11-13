@@ -184,20 +184,20 @@ struct SummaryCard: View {
             return (isToday ? "اليوم" : Weekdays.names[day], "لا توجد حصص", "")
         }
         guard isToday else {
-            return (Weekdays.names[day], "الحصة الأولى: \(first.subject)",
+            return (Weekdays.names[day], "الحصة الأولى: \(first.title)",
                     "من \(Fmt.time(first.start)) إلى \(Fmt.time(last.end))")
         }
         let current = items.first { $0.start <= now && now < $0.end }
         let next = items.first { $0.start > now }
         if let c = current {
             var detail = "تنتهي بعد \(Fmt.duration(c.end - now))"
-            if let n = next { detail += " · تليها \(n.subject)" }
-            return ("الحصة الحالية", c.subject, detail)
+            if let n = next { detail += " · تليها \(n.title)" }
+            return ("الحصة الحالية", c.title, detail)
         }
         if let n = next {
             var detail = "تبدأ بعد \(Fmt.duration(n.start - now)) · \(Fmt.time(n.start))"
             if !n.room.isEmpty { detail += " · \(n.room)" }
-            return ("الحصة التالية", n.subject, detail)
+            return ("الحصة التالية", n.title, detail)
         }
         return ("اليوم", "انتهت حصص اليوم", "انتهت آخر حصة الساعة \(Fmt.time(last.end))")
     }
@@ -397,7 +397,7 @@ struct ClassRow: View {
                 } content: {
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 6) {
-                            Text(item.subject)
+                            Text(item.title)
                                 .font(.system(.headline, design: .rounded))
                                 .foregroundColor(Theme.fg)
                                 .lineLimit(1)

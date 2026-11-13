@@ -11,6 +11,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         UINavigationBar.appearance().standardAppearance = bar
         UINavigationBar.appearance().scrollEdgeAppearance = bar
         UINavigationBar.appearance().compactAppearance = bar
+        UITableView.appearance().backgroundColor = Theme.uiBackground
+        UICollectionView.appearance().backgroundColor = Theme.uiBackground
         _ = Store.shared
         return true
     }

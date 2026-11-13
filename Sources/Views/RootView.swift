@@ -18,6 +18,7 @@ struct RootView: View {
     @State private var selectedDay = Weekdays.weekday(of: Date())
     @State private var editing: EditorTarget?
     @State private var showSettings = false
+    @State private var assigning: AssignTarget?
 
     private var mode: ViewMode { ViewMode(rawValue: modeRaw) ?? .day }
 
@@ -46,8 +47,17 @@ struct RootView: View {
                 if mode == .day {
                     DayView(selectedDay: $selectedDay, onEdit: edit, onAdd: add)
                 } else {
-                    WeekView(onEdit: edit)
+                    WeekView(onTap: { assign($0, $1) })
                 }
+            }
+
+            if let target = assigning {
+                AssignPopup(target: target,
+                            onClose: closePopup,
+                            onSettings: { closePopup(); showSettings = true },
+                            onDetails: { item in closePopup(); editing = EditorTarget(item: item, isNew: false) })
+                    .transition(.opacity)
+                    .zIndex(1)
             }
         }
         .sheet(item: $editing) { target in
@@ -137,11 +147,27 @@ struct RootView: View {
 
     // MARK: - Actions
 
+    private func assign(_ day: Int, _ period: Int) {
+        withAnimation(.easeOut(duration: 0.18)) { assigning = AssignTarget(day: day, period: period) }
+    }
+
+    private func closePopup() {
+        withAnimation(.easeOut(duration: 0.15)) { assigning = nil }
+    }
+
     private func edit(_ item: ClassItem) {
-        editing = EditorTarget(item: item, isNew: false)
+        if let p = item.period {
+            assign(item.weekday, p)
+        } else {
+            editing = EditorTarget(item: item, isNew: false)
+        }
     }
 
     private func add(_ day: Int, _ period: Int?) {
+        if let p = period {
+            assign(day, p)
+            return
+        }
         let slots = store.settings.periods()
         var item = ClassItem(subject: "", weekday: day, start: 0, end: 0, color: store.nextColor)
         if let n = period ?? store.freePeriod(on: day), n >= 1, n <= slots.count {

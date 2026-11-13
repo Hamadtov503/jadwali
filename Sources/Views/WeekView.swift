@@ -1,153 +1,147 @@
 import SwiftUI
 
+/// جدول الأسبوع على شكل مربعات: الأيام أعمدة، والحصص صفوف.
 struct WeekView: View {
     @EnvironmentObject var store: Store
-    var onEdit: (ClassItem) -> Void
+    var onTap: (Int, Int) -> Void
 
-    private let hourHeight: CGFloat = 64
-    private let axisWidth: CGFloat = 58
-    private let headerHeight: CGFloat = 52
+    private let labelWidth: CGFloat = 70
+    private let spacing: CGFloat = 6
 
     var body: some View {
         TimelineView(.periodic(from: Date(), by: 60)) { context in
             let today = Weekdays.weekday(of: context.date)
             let now = Weekdays.minutes(of: context.date)
             let days = store.weekDays
-            let range = store.hourRange
+            let slots = store.settings.periods()
 
             GeometryReader { geo in
-                let available = geo.size.width - 32 - axisWidth
-                let colWidth = max(96, available / CGFloat(max(days.count, 1)))
+                let count = CGFloat(max(days.count, 1))
+                let free = geo.size.width - 32 - 24 - labelWidth - spacing * count
+                let side = min(max(free / count, 46), 90)
 
                 ScrollView(.vertical, showsIndicators: false) {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        VStack(spacing: 0) {
-                            headerRow(days: days, today: today, colWidth: colWidth)
-                            Rectangle().fill(Theme.line).frame(height: 1)
-                            HStack(alignment: .top, spacing: 0) {
-                                axis(range: range)
+                    VStack(spacing: spacing) {
+                        headerRow(days: days, today: today, side: side)
+
+                        ForEach(Array(slots.enumerated()), id: \.offset) { i, slot in
+                            HStack(spacing: spacing) {
+                                periodLabel(i + 1, slot)
                                 ForEach(days, id: \.self) { d in
-                                    column(day: d, range: range, colWidth: colWidth,
-                                           isToday: d == today, now: now)
+                                    cell(day: d, period: i + 1, side: side,
+                                         isNow: d == today && slot.start <= now && now < slot.end)
                                 }
                             }
-                            .padding(.vertical, 10)
+                            if let b = store.settings.breakSlot(), i + 1 == store.settings.breakAfter {
+                                breakRow(b)
+                            }
                         }
-                        .background(Theme.surface)
-                        .clipShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
-                        .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
-                        .padding(.horizontal, 16)
                     }
+                    .padding(12)
+                    .card()
+                    .padding(.horizontal, 16)
                     .padding(.bottom, 24)
+                    .frame(maxWidth: .infinity)
                 }
             }
         }
     }
 
-    private func y(_ m: Int, _ range: (start: Int, end: Int)) -> CGFloat {
-        CGFloat(m - range.start) / 60 * hourHeight
-    }
-
-    private func totalHeight(_ range: (start: Int, end: Int)) -> CGFloat {
-        CGFloat(range.end - range.start) / 60 * hourHeight
-    }
-
-    private func headerRow(days: [Int], today: Int, colWidth: CGFloat) -> some View {
-        HStack(spacing: 0) {
-            Color.clear.frame(width: axisWidth, height: headerHeight)
+    private func headerRow(days: [Int], today: Int, side: CGFloat) -> some View {
+        HStack(spacing: spacing) {
+            Color.clear.frame(width: labelWidth, height: 1)
             ForEach(days, id: \.self) { d in
+                let isToday = d == today
                 VStack(spacing: 1) {
                     Text(Weekdays.names[d])
-                        .font(.subheadline.weight(.semibold))
+                        .font(.caption.weight(.semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                     Text(Fmt.dayNumber(Weekdays.date(of: d)))
-                        .font(.caption.monospacedDigit())
+                        .font(.caption2.monospacedDigit())
                         .opacity(0.8)
                 }
-                .foregroundColor(d == today ? SubjectColor.orange.ink : Theme.fg)
-                .frame(width: colWidth, height: headerHeight)
+                .foregroundColor(isToday ? .white : Theme.fg)
+                .frame(width: side)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(isToday ? Theme.green : Color.clear)
+                )
             }
         }
     }
 
-    private func axis(range: (start: Int, end: Int)) -> some View {
-        ZStack(alignment: .topLeading) {
-            ForEach(Array(stride(from: range.start + 60, to: range.end, by: 60)), id: \.self) { m in
-                Text(Fmt.time(m))
-                    .font(.caption2.monospacedDigit())
-                    .foregroundColor(Theme.muted)
-                    .lineLimit(1)
-                    .fixedSize()
-                    .offset(y: y(m, range) - 7)
-            }
-        }
-        .padding(.leading, 8)
-        .frame(width: axisWidth, height: totalHeight(range), alignment: .topLeading)
-    }
-
-    private func column(day: Int, range: (start: Int, end: Int), colWidth: CGFloat,
-                        isToday: Bool, now: Int) -> some View {
-        let height = totalHeight(range)
-        return ZStack(alignment: .topLeading) {
-            ForEach(Array(stride(from: range.start + 30, to: range.end, by: 30)), id: \.self) { m in
-                Rectangle()
-                    .fill(Theme.line.opacity(m % 60 == 0 ? 1 : 0.5))
-                    .frame(width: colWidth, height: 1)
-                    .offset(y: y(m, range))
-            }
-
-            ForEach(store.classes(on: day)) { item in
-                let h = max(22, CGFloat(item.duration) / 60 * hourHeight - 3)
-                Button { onEdit(item) } label: {
-                    block(item, height: h)
-                }
-                .buttonStyle(.plain)
-                .padding(.horizontal, 4)
-                .frame(width: colWidth, height: h)
-                .offset(y: y(item.start, range) + 1)
-            }
-
-            if isToday && now >= range.start && now <= range.end {
-                ZStack(alignment: .leading) {
-                    Rectangle().fill(Theme.orange).frame(width: colWidth, height: 2)
-                    Circle().fill(Theme.orange).frame(width: 10, height: 10)
-                }
-                .frame(width: colWidth, height: 10, alignment: .leading)
-                .offset(y: y(now, range) - 5)
-                .allowsHitTesting(false)
-            }
-        }
-        .frame(width: colWidth, height: height, alignment: .topLeading)
-        .background(isToday ? SubjectColor.orange.soft.opacity(0.45) : Color.clear)
-        .overlay(alignment: .leading) {
-            Rectangle().fill(Theme.line).frame(width: 1)
-        }
-    }
-
-    private func block(_ item: ClassItem, height: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 1) {
-            Text(item.subject)
-                .font(.system(.footnote, design: .rounded).weight(.semibold))
+    private func periodLabel(_ n: Int, _ slot: SchoolSettings.Slot) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("الحصة \(n)")
+                .font(.caption.weight(.semibold))
                 .foregroundColor(Theme.fg)
-                .lineLimit(height < 46 ? 1 : 2)
-            Text(Fmt.range(item.start, item.end))
+            Text(Fmt.range(slot.start, slot.end))
                 .font(.caption2.monospacedDigit())
-                .foregroundColor(item.color.ink)
-            if height >= 60 && !item.room.isEmpty {
-                Text(item.room)
-                    .font(.caption2)
-                    .foregroundColor(item.color.ink)
-                    .lineLimit(1)
+                .foregroundColor(Theme.muted)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+        }
+        .frame(width: labelWidth, alignment: .leading)
+    }
+
+    private func breakRow(_ b: SchoolSettings.Slot) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "cup.and.saucer.fill")
+                .font(.system(size: 12))
+            Text("الفسحة")
+                .font(.caption.weight(.semibold))
+            Spacer()
+            Text(Fmt.range(b.start, b.end))
+                .font(.caption2.monospacedDigit())
+        }
+        .foregroundColor(SubjectColor.orange.ink)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(SubjectColor.orange.soft)
+        )
+    }
+
+    @ViewBuilder
+    private func cell(day: Int, period: Int, side: CGFloat, isNow: Bool) -> some View {
+        let item = store.item(day: day, period: period)
+        Button { onTap(day, period) } label: {
+            ZStack {
+                if let item = item {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(item.color.soft)
+                    VStack(spacing: 2) {
+                        Text(item.title)
+                            .font(.system(.footnote, design: .rounded).weight(.bold))
+                            .foregroundColor(item.color.ink)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.center)
+                            .minimumScaleFactor(0.6)
+                        if item.className != nil && !item.subject.isEmpty && store.settings.subjects.count > 1 {
+                            Text(item.subject)
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(item.color.ink.opacity(0.8))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        }
+                    }
+                    .padding(4)
+                } else {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Theme.line, style: StrokeStyle(lineWidth: 1.2, dash: [4, 3]))
+                }
             }
+            .frame(width: side, height: side)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(isNow ? Theme.orange : Color.clear, lineWidth: 2.5)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
-        .padding(.vertical, 5)
-        .padding(.leading, 9)
-        .padding(.trailing, 6)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(item.color.soft)
-        .overlay(alignment: .leading) {
-            Rectangle().fill(item.color.main).frame(width: 4)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .contentShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(Weekdays.names[day]) الحصة \(period)" + (item.map { " \($0.title)" } ?? ""))
     }
 }

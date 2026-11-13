@@ -18,23 +18,60 @@ struct EditorView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section {
+                Section(header: Text("المادة")) {
+                    if !store.settings.subjects.isEmpty {
+                        LazyVGrid(columns: grid(2), spacing: 8) {
+                            ForEach(store.settings.subjects, id: \.self) { name in
+                                Chip(title: name, selected: item.subject == name) { item.subject = name }
+                            }
+                        }
+                        .padding(.vertical, 6)
+                    }
                     TextField("المادة", text: $item.subject)
                         .focused($subjectFocused)
-                    Picker("اليوم", selection: $item.weekday) {
-                        ForEach(0..<7, id: \.self) { d in
-                            Text(Weekdays.names[d]).tag(d)
+                }
+
+                if !store.settings.classes.isEmpty {
+                    Section(header: Text("الفصل")) {
+                        LazyVGrid(columns: grid(3), spacing: 8) {
+                            ForEach(store.settings.classes) { c in
+                                Chip(title: c.name, color: c.color, selected: item.classID == c.id) {
+                                    if item.classID == c.id {
+                                        item.classID = nil
+                                        item.className = nil
+                                    } else {
+                                        item.classID = c.id
+                                        item.className = c.name
+                                        item.color = c.color
+                                    }
+                                }
+                            }
                         }
+                        .padding(.vertical, 6)
                     }
                 }
 
-                Section {
-                    Picker("الوقت", selection: periodBinding) {
-                        ForEach(Array(slots.enumerated()), id: \.offset) { i, slot in
-                            Text("الحصة \(i + 1) · \(Fmt.range(slot.start, slot.end))").tag(i + 1)
+                Section(header: Text("اليوم")) {
+                    LazyVGrid(columns: grid(4), spacing: 8) {
+                        ForEach(dayChoices, id: \.self) { d in
+                            Chip(title: Weekdays.names[d], selected: item.weekday == d) {
+                                item.weekday = d
+                                errorText = nil
+                            }
                         }
-                        Text("وقت مخصص").tag(0)
                     }
+                    .padding(.vertical, 6)
+                }
+
+                Section(header: Text("الحصة")) {
+                    LazyVGrid(columns: grid(2), spacing: 8) {
+                        ForEach(Array(slots.enumerated()), id: \.offset) { i, slot in
+                            Chip(title: "\(i + 1) · \(Fmt.range(slot.start, slot.end))",
+                                 selected: item.period == i + 1) { setPeriod(i + 1) }
+                        }
+                        Chip(title: "وقت مخصص", selected: item.period == nil) { setPeriod(0) }
+                    }
+                    .padding(.vertical, 6)
                     if item.period == nil {
                         DatePicker("من", selection: startBinding, displayedComponents: .hourAndMinute)
                         DatePicker("إلى", selection: endBinding, displayedComponents: .hourAndMinute)
@@ -43,31 +80,12 @@ struct EditorView: View {
 
                 Section {
                     TextField("القاعة", text: $item.room)
-                    TextField("المعلم", text: $item.teacher)
                 }
 
-                Section(header: Text("اللون")) {
-                    HStack(spacing: 10) {
-                        ForEach(SubjectColor.allCases) { c in
-                            let on = item.color == c
-                            Button { item.color = c } label: {
-                                HStack(spacing: 6) {
-                                    Circle().fill(c.main).frame(width: 14, height: 14)
-                                    Text(c.title)
-                                        .font(.subheadline)
-                                        .foregroundColor(Theme.fg)
-                                }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 7)
-                                .background(Capsule().fill(on ? c.soft : Color.clear))
-                                .overlay(Capsule().stroke(on ? c.main : Theme.line, lineWidth: 2))
-                                .contentShape(Capsule())
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityAddTraits(on ? .isSelected : [])
-                        }
+                if item.classID == nil {
+                    Section(header: Text("اللون")) {
+                        ColorGrid(selection: $item.color)
                     }
-                    .padding(.vertical, 4)
                 }
 
                 if let e = errorText {
@@ -105,31 +123,36 @@ struct EditorView: View {
         }
         .navigationViewStyle(.stack)
         .onAppear {
-            if isNew {
+            if isNew && store.settings.subjects.isEmpty {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { subjectFocused = true }
             }
         }
+    }
+
+    // MARK: - Helpers
+
+    private func grid(_ n: Int) -> [GridItem] {
+        Array(repeating: GridItem(.flexible(), spacing: 8), count: n)
+    }
+
+    private var dayChoices: [Int] {
+        Array(Set(store.weekDays).union([item.weekday])).sorted()
     }
 
     // MARK: - Time bindings
 
     private var slots: [SchoolSettings.Slot] { store.settings.periods() }
 
-    private var periodBinding: Binding<Int> {
-        Binding(
-            get: { item.period ?? 0 },
-            set: { n in
-                let s = slots
-                if n >= 1 && n <= s.count {
-                    item.period = n
-                    item.start = s[n - 1].start
-                    item.end = s[n - 1].end
-                } else {
-                    item.period = nil
-                }
-                errorText = nil
-            }
-        )
+    private func setPeriod(_ n: Int) {
+        let s = slots
+        if n >= 1 && n <= s.count {
+            item.period = n
+            item.start = s[n - 1].start
+            item.end = s[n - 1].end
+        } else {
+            item.period = nil
+        }
+        errorText = nil
     }
 
     private func date(_ m: Int) -> Date {
@@ -164,7 +187,7 @@ struct EditorView: View {
         item.subject = item.subject.trimmingCharacters(in: .whitespacesAndNewlines)
         item.room = item.room.trimmingCharacters(in: .whitespacesAndNewlines)
         item.teacher = item.teacher.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !item.subject.isEmpty else {
+        guard !item.subject.isEmpty || item.classID != nil else {
             errorText = "اكتب اسم المادة."
             subjectFocused = true
             return
@@ -174,7 +197,7 @@ struct EditorView: View {
             return
         }
         if !store.isExample, let other = store.conflict(with: item) {
-            errorText = "يتعارض هذا الوقت مع حصة \(other.subject) (\(Fmt.time(other.start)) – \(Fmt.time(other.end)))."
+            errorText = "يتعارض هذا الوقت مع حصة \(other.title) (\(Fmt.range(other.start, other.end)))."
             return
         }
         store.upsert(item)

@@ -140,7 +140,42 @@ final class Store: ObservableObject {
 
     func updateSettings(_ new: SchoolSettings) {
         settings = new
+        // تحديث اسم الفصل ولونه في الحصص المرتبطة به.
+        for i in items.indices {
+            guard let cid = items[i].classID else { continue }
+            if let c = settings.schoolClass(cid) {
+                items[i].className = c.name
+                items[i].color = c.color
+            } else {
+                items[i].classID = nil
+            }
+        }
         reflow()
         save()
+    }
+
+    /// الحصة الموجودة في رقم حصة معيّن من يوم معيّن.
+    func item(day: Int, period: Int) -> ClassItem? {
+        let slots = settings.periods()
+        if let exact = items.first(where: { $0.weekday == day && $0.period == period }) { return exact }
+        guard period >= 1 && period <= slots.count else { return nil }
+        let slot = slots[period - 1]
+        return items.first { $0.weekday == day && $0.start < slot.end && slot.start < $0.end }
+    }
+
+    /// يضع فصلًا (ومادة) في حصة من الجدول.
+    func assign(day: Int, period: Int, subject: String, schoolClass: SchoolClass?) {
+        let slots = settings.periods()
+        guard period >= 1 && period <= slots.count else { return }
+        var item = (isExample ? nil : item(day: day, period: period))
+            ?? ClassItem(subject: "", weekday: day, start: 0, end: 0)
+        item.subject = subject
+        item.period = period
+        item.start = slots[period - 1].start
+        item.end = slots[period - 1].end
+        item.classID = schoolClass?.id
+        item.className = schoolClass?.name
+        item.color = schoolClass?.color ?? nextColor
+        upsert(item)
     }
 }

@@ -1,15 +1,32 @@
 import Foundation
 
 enum SubjectColor: String, Codable, CaseIterable, Identifiable {
-    case green, orange, blue
+    case green, orange, blue, purple, pink, teal, red, yellow
     var id: String { rawValue }
     var title: String {
         switch self {
         case .green: return "أخضر"
         case .orange: return "برتقالي"
         case .blue: return "أزرق"
+        case .purple: return "بنفسجي"
+        case .pink: return "وردي"
+        case .teal: return "فيروزي"
+        case .red: return "أحمر"
+        case .yellow: return "ذهبي"
         }
     }
+
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = SubjectColor(rawValue: raw) ?? .blue
+    }
+}
+
+/// فصل يدرّسه المعلم، وله لون.
+struct SchoolClass: Codable, Identifiable, Equatable, Hashable {
+    var id = UUID()
+    var name: String
+    var color: SubjectColor
 }
 
 /// حصة أسبوعية متكررة.
@@ -26,9 +43,21 @@ struct ClassItem: Codable, Identifiable, Equatable {
     var color: SubjectColor = .blue
     /// رقم الحصة (يبدأ من 1). nil = وقت مخصص.
     var period: Int? = nil
+    /// الفصل المرتبط بالحصة.
+    var classID: UUID? = nil
+    var className: String? = nil
 
     var duration: Int { end - start }
-    var meta: String { [room, teacher].filter { !$0.isEmpty }.joined(separator: " · ") }
+    /// العنوان الرئيسي: اسم الفصل إن وُجد، وإلا المادة.
+    var title: String {
+        if let c = className, !c.isEmpty { return c }
+        return subject
+    }
+    /// السطر الثاني: المادة (إن كان العنوان فصلًا) ثم القاعة والمعلم.
+    var meta: String {
+        let hasClass = !(className ?? "").isEmpty
+        return [hasClass ? subject : "", room, teacher].filter { !$0.isEmpty }.joined(separator: " · ")
+    }
 
     func overlaps(_ other: ClassItem) -> Bool {
         weekday == other.weekday && start < other.end && other.start < end
@@ -45,6 +74,43 @@ struct SchoolSettings: Codable, Equatable {
     var breakAfter = 3
     var breakLength = 25
     var schoolDays: [Int] = [0, 1, 2, 3, 4]
+    var subjects: [String] = []
+    var classes: [SchoolClass] = []
+
+    init() {}
+
+    private enum CodingKeys: String, CodingKey {
+        case dayStart, periodsPerDay, periodLength, passing, hasBreak, breakAfter, breakLength
+        case schoolDays, subjects, classes
+    }
+
+    /// يقرأ الإعدادات القديمة التي لا تحوي الحقول الجديدة.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        let d = SchoolSettings()
+        dayStart = try c.decodeIfPresent(Int.self, forKey: .dayStart) ?? d.dayStart
+        periodsPerDay = try c.decodeIfPresent(Int.self, forKey: .periodsPerDay) ?? d.periodsPerDay
+        periodLength = try c.decodeIfPresent(Int.self, forKey: .periodLength) ?? d.periodLength
+        passing = try c.decodeIfPresent(Int.self, forKey: .passing) ?? d.passing
+        hasBreak = try c.decodeIfPresent(Bool.self, forKey: .hasBreak) ?? d.hasBreak
+        breakAfter = try c.decodeIfPresent(Int.self, forKey: .breakAfter) ?? d.breakAfter
+        breakLength = try c.decodeIfPresent(Int.self, forKey: .breakLength) ?? d.breakLength
+        schoolDays = try c.decodeIfPresent([Int].self, forKey: .schoolDays) ?? d.schoolDays
+        subjects = try c.decodeIfPresent([String].self, forKey: .subjects) ?? []
+        classes = try c.decodeIfPresent([SchoolClass].self, forKey: .classes) ?? []
+    }
+
+    func schoolClass(_ id: UUID?) -> SchoolClass? {
+        guard let id = id else { return nil }
+        return classes.first { $0.id == id }
+    }
+
+    /// أول لون لم يُستخدم لفصل بعد.
+    var nextClassColor: SubjectColor {
+        let used = Set(classes.map(\.color))
+        return SubjectColor.allCases.first { !used.contains($0) }
+            ?? SubjectColor.allCases[classes.count % SubjectColor.allCases.count]
+    }
 
     typealias Slot = (start: Int, end: Int)
 
