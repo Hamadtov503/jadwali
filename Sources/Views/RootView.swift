@@ -19,6 +19,8 @@ struct RootView: View {
     @State private var editing: EditorTarget?
     @State private var showSettings = false
     @State private var assigning: AssignTarget?
+    @State private var showProfile = false
+    @AppStorage("userName") private var userName = ""
 
     private var mode: ViewMode { ViewMode(rawValue: modeRaw) ?? .day }
 
@@ -72,32 +74,24 @@ struct RootView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 8) {
-                        Text("جدولي الدراسي")
-                            .font(.system(size: 26, weight: .bold, design: .rounded))
-                            .foregroundColor(Theme.fg)
-                        HStack(spacing: 4) {
-                            Circle().fill(Theme.green).frame(width: 8, height: 8)
-                            Circle().fill(Theme.orange).frame(width: 8, height: 8)
-                            Circle().fill(Theme.blue).frame(width: 8, height: 8)
-                        }
-                    }
-                    Text(Fmt.today())
-                        .font(.subheadline)
-                        .foregroundColor(Theme.muted)
+            HStack(alignment: .center) {
+                TimelineView(.periodic(from: Date(), by: 60)) { context in
+                    Text(greeting(at: context.date))
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundColor(Theme.fg)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                 }
                 Spacer()
-                Button { showSettings = true } label: {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(Theme.fg)
-                        .frame(width: 42, height: 42)
-                        .background(Circle().fill(Theme.surface2))
+                HStack(spacing: 10) {
+                    circleButton("person.crop.circle", label: "الملف الشخصي") { showProfile = true }
+                        .sheet(isPresented: $showProfile) {
+                            ProfileView()
+                                .environment(\.layoutDirection, .rightToLeft)
+                                .environment(\.locale, Fmt.locale)
+                        }
+                    circleButton("gearshape", label: "الإعدادات") { showSettings = true }
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel("الإعدادات")
             }
 
             HStack(spacing: 2) {
@@ -143,6 +137,25 @@ struct RootView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(SubjectColor.orange.soft))
+    }
+
+    private func greeting(at date: Date) -> String {
+        let h = Weekdays.calendar.component(.hour, from: date)
+        let base = (4..<12).contains(h) ? "صباح الخير" : "مساء الخير"
+        let name = userName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty ? base : "\(base) أ. \(name)"
+    }
+
+    private func circleButton(_ icon: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(Theme.fg)
+                .frame(width: 42, height: 42)
+                .background(Circle().fill(Theme.surface2))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 
     // MARK: - Actions

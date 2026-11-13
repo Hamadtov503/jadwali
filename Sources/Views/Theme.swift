@@ -26,6 +26,7 @@ enum Theme {
     static let green = Color(dynamic(0x2E9E6B, 0x3DBB82))
     static let orange = Color(dynamic(0xEE8427, 0xF59A45))
     static let blue = Color(dynamic(0x2F78D4, 0x4C8FE6))
+    static let deepGreen = Color(UIColor(hex: 0x165C3E))
 
     static let radius: CGFloat = 16
 }
@@ -72,6 +73,17 @@ extension SubjectColor {
 }
 
 extension View {
+    /// يجعل خلفية النماذج (Form) مثل خلفية التطبيق.
+    @ViewBuilder
+    func appFormBackground() -> some View {
+        if #available(iOS 16.0, *) {
+            self.scrollContentBackground(.hidden)
+                .background(Theme.bg.ignoresSafeArea())
+        } else {
+            self.background(Theme.bg.ignoresSafeArea())
+        }
+    }
+
     func card(_ fill: Color = Theme.surface) -> some View {
         background(fill)
             .clipShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))

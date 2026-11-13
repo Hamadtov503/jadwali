@@ -4,7 +4,6 @@ import UIKit
 final class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
-        UIView.appearance().semanticContentAttribute = .forceRightToLeft
         let bar = UINavigationBarAppearance()
         bar.configureWithTransparentBackground()
         bar.backgroundColor = Theme.uiBackground
@@ -25,7 +24,7 @@ struct JadwaliApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
+            LaunchContainer()
                 .environmentObject(store)
                 .environment(\.layoutDirection, .rightToLeft)
                 .environment(\.locale, Fmt.locale)

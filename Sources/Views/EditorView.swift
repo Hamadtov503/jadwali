@@ -102,6 +102,7 @@ struct EditorView: View {
                     }
                 }
             }
+            .appFormBackground()
             .navigationTitle(isNew ? "حصة جديدة" : "تعديل الحصة")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -122,6 +122,7 @@ struct SettingsView: View {
                     }
                 }
             }
+            .appFormBackground()
             .navigationTitle("الإعدادات")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -244,6 +245,7 @@ struct ClassDetailView: View {
                 ColorGrid(selection: $schoolClass.color)
             }
         }
+        .appFormBackground()
         .navigationTitle(schoolClass.name)
         .navigationBarTitleDisplayMode(.inline)
     }
