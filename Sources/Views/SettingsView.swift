@@ -147,7 +147,7 @@ struct SettingsView: View {
                         backupFile = BackupFile(data: data)
                         exporting = true
                     } label: {
-                        label("تصدير نسخة احتياطية", "square.and.arrow.up.fill", Theme.deepBrown)
+                        label("تصدير نسخة احتياطية", "square.and.arrow.up.fill", .red)
                             .foregroundColor(Theme.fg)
                     }
                     .fileExporter(isPresented: $exporting, document: backupFile,

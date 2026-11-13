@@ -50,9 +50,11 @@ struct RootView: View {
                 ZStack {
                     if mode == .day {
                         DayView(selectedDay: $selectedDay)
+                            .id("day-page")
                             .transition(.move(edge: .leading))
                     } else {
                         WeekView(onTap: { assign($0, $1) })
+                            .id("week-page")
                             .transition(.move(edge: .trailing))
                     }
                 }
