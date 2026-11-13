@@ -133,12 +133,12 @@ struct WeekView: View {
             Text(Fmt.range(b.start, b.end))
                 .font(.caption2.monospacedDigit())
         }
-        .foregroundColor(SubjectColor.orange.ink)
+        .foregroundColor(SubjectColor.blue.ink)
         .padding(.horizontal, 12)
         .padding(.vertical, 7)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(SubjectColor.orange.soft)
+                .fill(Color(UIColor(hex: 0xC5DDF8)))
         )
     }
 

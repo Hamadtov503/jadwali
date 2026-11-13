@@ -19,8 +19,7 @@ targets:
         CFBundleLocalizations: [ar]
         CFBundleShortVersionString: "$(MARKETING_VERSION)"
         CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
-        UILaunchScreen:
-          UIColorName: SplashBrown
+        UILaunchStoryboardName: Launch
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         UIRequiresFullScreen: true

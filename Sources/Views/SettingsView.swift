@@ -104,6 +104,7 @@ struct SettingsView: View {
                     DatePicker(selection: dayStartBinding, displayedComponents: .hourAndMinute) {
                         label("بداية الدوام", "sunrise.fill", Theme.orange)
                     }
+                    .frame(height: 30)
                     Stepper(value: periodsBinding, in: 1...12) {
                         row("عدد الحصص", Fmt.n(s.periodsPerDay), "list.number", Theme.green)
                     }
