@@ -81,8 +81,7 @@ struct AssignPopup: View {
                 if let e = existing {
                     HStack(spacing: 10) {
                         Button {
-                            quietly { store.delete(e.id) }
-                            close(nil)
+                            close { quietly { store.delete(e.id) } }
                         } label: {
                             Label("إفراغ الحصة", systemImage: "trash")
                                 .font(.subheadline.weight(.medium))
@@ -144,8 +143,8 @@ struct AssignPopup: View {
 
     private func pick(_ c: SchoolClass, _ close: PopupClose) {
         guard let subj = chosenSubject else { return }
-        quietly { store.assign(day: target.day, period: target.period, subject: subj, schoolClass: c) }
-        close(nil)
+        let day = target.day, period = target.period
+        close { quietly { store.assign(day: day, period: period, subject: subj, schoolClass: c) } }
     }
 
     /// تغيير الجدول بلا حركة، حتى لا يومض الجدول خلف النافذة وهي تُغلق.
@@ -212,7 +211,7 @@ struct ConfirmPopup: View {
                     .font(.system(.headline, design: .rounded))
                     .foregroundColor(Theme.fg)
                 HStack(spacing: 10) {
-                    Button { onYes(); close(nil) } label: {
+                    Button { close { onYes() } } label: {
                         Text("نعم")
                             .font(.subheadline.weight(.semibold))
                             .foregroundColor(Theme.fg)
