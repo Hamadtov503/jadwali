@@ -30,6 +30,7 @@ struct SettingsView: View {
                     .onDelete { s.subjects.remove(atOffsets: $0) }
                     if adding == .subject {
                         HStack(spacing: 12) {
+                            SettingIcon(name: "book.fill", color: Theme.green)
                             TextField("مادة جديدة", text: $newSubject.arabicDigits)
                                 .focused($focus, equals: .subject)
                                 .submitLabel(.done)
@@ -55,8 +56,7 @@ struct SettingsView: View {
                     ForEach(s.classes) { c in
                         Button { editingClass = ClassRef(id: c.id) } label: {
                             HStack {
-                                Circle().fill(c.color.main).frame(width: 12, height: 12)
-                                Text(c.name)
+                                label(c.name, "person.3.fill", c.color.main)
                                     .foregroundColor(Theme.fg)
                                 Spacer()
                                 Image(systemName: "chevron.left")
@@ -70,6 +70,7 @@ struct SettingsView: View {
                     .onDelete { s.classes.remove(atOffsets: $0) }
                     if adding == .klass {
                         HStack(spacing: 12) {
+                            SettingIcon(name: "person.3.fill", color: Theme.green)
                             TextField("فصل جديد", text: $newClass.arabicDigits)
                                 .focused($focus, equals: .klass)
                                 .submitLabel(.done)
@@ -244,11 +245,15 @@ struct SettingsView: View {
     }
 
     private func label(_ title: String, _ icon: String, _ color: Color) -> some View {
-        Text(title)
+        HStack(spacing: 12) {
+            SettingIcon(name: icon, color: color)
+            Text(title)
+        }
     }
 
     private func row(_ title: String, _ value: String, _ icon: String, _ color: Color) -> some View {
         HStack(spacing: 12) {
+            SettingIcon(name: icon, color: color)
             Text(title)
             Spacer()
             Text(value)
@@ -309,6 +314,7 @@ struct ClassDetailView: View {
                 Group {
                     Section {
                         HStack(spacing: 12) {
+                            SettingIcon(name: "person.3.fill", color: schoolClass.color.main)
                             TextField("اسم الفصل", text: $schoolClass.name.arabicDigits)
                                 .focused($nameFocused)
                         }

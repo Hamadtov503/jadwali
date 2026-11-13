@@ -182,23 +182,8 @@ struct Chip: View {
 
 /// عنوان قسم في الإعدادات، فوق الخلفية الغامقة.
 func SectionTitle(_ title: String) -> some View {
-    let icons: [String: String] = [
-        "المواد الدراسية": "book.fill", "المادة": "book.fill",
-        "الفصول": "person.3.fill", "الفصل": "person.3.fill",
-        "اليوم الدراسي": "clock.fill", "الفسحة": "cup.and.saucer.fill",
-        "أيام الدراسة": "calendar", "اليوم": "calendar",
-        "توقيت الحصص": "bell.fill", "الحصة": "bell.fill",
-        "اللون": "paintpalette.fill",
-    ]
-    return HStack(spacing: 7) {
-        if let icon = icons[title] {
-            Image(systemName: icon)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(SubjectColor.orange.ink)
-        }
-        Text(title)
-            .font(.subheadline.weight(.semibold))
-            .foregroundColor(Theme.onBg)
-    }
-    .textCase(nil)
+    Text(title)
+        .font(.subheadline.weight(.semibold))
+        .foregroundColor(Theme.onBg)
+        .textCase(nil)
 }
