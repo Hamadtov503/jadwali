@@ -15,22 +15,22 @@ enum Theme {
         UIColor { $0.userInterfaceStyle == .dark ? UIColor(hex: dark) : UIColor(hex: light) }
     }
 
-    static let uiBackground = UIColor(hex: 0x165C3E)
+    static let uiBackground = UIColor(hex: 0x4A3326)
     static let bg = Color(uiBackground)
     /// النص فوق الخلفية الخضراء الغامقة.
     static let onBg = Color.white
-    static let uiSurface = UIColor(hex: 0xE4F5EB)
+    static let uiSurface = UIColor(hex: 0xF5ECE2)
     static let surface = Color(uiSurface)
-    static let surface2 = Color(UIColor(hex: 0xC8E8D4))
-    static let fg = Color(UIColor(hex: 0x1B2522))
-    static let muted = Color(UIColor(hex: 0x4F665B))
-    static let line = Color(UIColor(hex: 0xB5D9C3))
+    static let surface2 = Color(UIColor(hex: 0xE6D5C3))
+    static let fg = Color(UIColor(hex: 0x2B1E16))
+    static let muted = Color(UIColor(hex: 0x6E5848))
+    static let line = Color(UIColor(hex: 0xD9C4AD))
 
     static let green = Color(dynamic(0x2E9E6B, 0x3DBB82))
     static let orange = Color(dynamic(0xEE8427, 0xF59A45))
     static let blue = Color(dynamic(0x2F78D4, 0x4C8FE6))
-    static let deepGreen = Color(UIColor(hex: 0x165C3E))
-    static let lightGreen = Color(UIColor(hex: 0xBFE8CF))
+    static let deepBrown = Color(UIColor(hex: 0x4A3326))
+    static let lightBrown = Color(UIColor(hex: 0xE9D5BF))
 
     static let radius: CGFloat = 16
 }

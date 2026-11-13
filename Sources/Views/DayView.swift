@@ -44,11 +44,11 @@ struct DayView: View {
                                 .foregroundColor(Theme.orange)
                             Text("إجازة نهاية الأسبوع")
                                 .font(.system(.title3, design: .rounded).weight(.semibold))
-                                .foregroundColor(Theme.deepGreen)
+                                .foregroundColor(Theme.deepBrown)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 40)
-                        .card(Theme.lightGreen)
+                        .card(Theme.lightBrown)
                     } else {
                     SummaryCard(items: items, isToday: isToday, now: now, day: selectedDay)
 

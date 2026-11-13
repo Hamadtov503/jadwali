@@ -26,7 +26,7 @@ struct SplashView: View {
 
     var body: some View {
         ZStack {
-            Theme.deepGreen.ignoresSafeArea()
+            Theme.deepBrown.ignoresSafeArea()
             VStack(spacing: 18) {
                 Image("Logo")
                     .resizable()
