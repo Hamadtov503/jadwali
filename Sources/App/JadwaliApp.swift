@@ -42,6 +42,15 @@ struct JadwaliApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var store = Store.shared
 
+    init() {
+        // لوحة المفاتيح في iOS 16 تُرسم داخل التطبيق نفسه وتأخذ الأرقام من إعدادات منطقته.
+        // نثبّت منطقة التطبيق على السعودية بالأرقام العربية. يسري من التشغيل التالي.
+        let d = UserDefaults.standard
+        let wanted = "ar_SA@numbers=arab"
+        if d.string(forKey: "AppleLocale") != wanted { d.set(wanted, forKey: "AppleLocale") }
+        if d.stringArray(forKey: "AppleLanguages")?.first != "ar-SA" { d.set(["ar-SA"], forKey: "AppleLanguages") }
+    }
+
     var body: some Scene {
         WindowGroup {
             LaunchContainer()

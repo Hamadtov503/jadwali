@@ -189,6 +189,13 @@ struct SettingsView: View {
                         .foregroundColor(Theme.muted)
                         .frame(maxWidth: .infinity)
                         .listRowBackground(Color.clear)
+                    // سطر مؤقت لتشخيص أرقام لوحة المفاتيح.
+                    Text("\(Locale.current.identifier) · \(Bundle.main.preferredLocalizations.joined(separator: ",")) · \(Locale.preferredLanguages.prefix(2).joined(separator: ","))")
+                        .font(.caption2)
+                        .foregroundColor(Theme.muted)
+                        .frame(maxWidth: .infinity)
+                        .environment(\.layoutDirection, .leftToRight)
+                        .listRowBackground(Color.clear)
                 }
             }
             .listRowBackground(Theme.surface)
