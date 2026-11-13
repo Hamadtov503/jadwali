@@ -13,6 +13,7 @@ final class Store: ObservableObject {
         var isExample: Bool
         var settings: SchoolSettings?
         var rev: Int?
+        var userName: String?
     }
 
     private let url: URL
@@ -44,8 +45,31 @@ final class Store: ObservableObject {
         save()
     }
 
+    // MARK: - Backup
+
+    /// نسخة احتياطية من الجدول والإعدادات واسم المستخدم.
+    func backupData() -> Data? {
+        let saved = Saved(items: items, isExample: isExample, settings: settings, rev: 2,
+                          userName: UserDefaults.standard.string(forKey: "userName"))
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted]
+        return try? encoder.encode(saved)
+    }
+
+    /// يستبدل البيانات الحالية بمحتوى نسخة احتياطية. يرجع false إن كان الملف غير صالح.
+    func restore(from data: Data) -> Bool {
+        guard let saved = try? JSONDecoder().decode(Saved.self, from: data) else { return false }
+        items = saved.items
+        isExample = saved.isExample
+        settings = saved.settings ?? SchoolSettings()
+        if let name = saved.userName { UserDefaults.standard.set(name, forKey: "userName") }
+        reflow()
+        save()
+        return true
+    }
+
     private func save() {
-        let saved = Saved(items: items, isExample: isExample, settings: settings, rev: 2)
+        let saved = Saved(items: items, isExample: isExample, settings: settings, rev: 2, userName: nil)
         guard let data = try? JSONEncoder().encode(saved) else { return }
         try? data.write(to: url, options: .atomic)
     }

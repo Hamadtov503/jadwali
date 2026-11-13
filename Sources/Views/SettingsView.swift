@@ -1,4 +1,21 @@
 import SwiftUI
+import UniformTypeIdentifiers
+
+/// ملف النسخة الاحتياطية (JSON).
+struct BackupFile: FileDocument {
+    static var readableContentTypes: [UTType] { [.json] }
+    var data: Data
+
+    init(data: Data) { self.data = data }
+
+    init(configuration: ReadConfiguration) throws {
+        data = configuration.file.regularFileContents ?? Data()
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: data)
+    }
+}
 
 struct SettingsView: View {
     @EnvironmentObject var store: Store
@@ -9,6 +26,10 @@ struct SettingsView: View {
     @State private var newClass = ""
     @State private var adding: AddKind?
     @State private var editingClass: ClassRef?
+    @State private var exporting = false
+    @State private var importing = false
+    @State private var backupFile = BackupFile(data: Data())
+    @State private var backupMessage: String?
 
     struct ClassRef: Identifiable { let id: UUID }
     @FocusState private var focus: AddKind?
@@ -147,6 +168,37 @@ struct SettingsView: View {
                     }
                 }
 
+                Section(header: SectionTitle("النسخ الاحتياطي")) {
+                    Button {
+                        guard let data = store.backupData() else { return }
+                        backupFile = BackupFile(data: data)
+                        exporting = true
+                    } label: {
+                        label("تصدير نسخة احتياطية", "square.and.arrow.up.fill", Theme.deepBrown)
+                            .foregroundColor(Theme.fg)
+                    }
+                    .fileExporter(isPresented: $exporting, document: backupFile,
+                                  contentType: .json, defaultFilename: "نسخة جدولي") { result in
+                        if case .success = result { backupMessage = "تم تصدير النسخة الاحتياطية." }
+                    }
+
+                    Button { importing = true } label: {
+                        label("استيراد نسخة احتياطية", "square.and.arrow.down.fill", Theme.green)
+                            .foregroundColor(Theme.fg)
+                    }
+                    .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { result in
+                        guard case .success(let url) = result else { return }
+                        let scoped = url.startAccessingSecurityScopedResource()
+                        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+                        if let data = try? Data(contentsOf: url), store.restore(from: data) {
+                            s = store.settings
+                            backupMessage = "تم استيراد النسخة الاحتياطية."
+                        } else {
+                            backupMessage = "الملف ليس نسخة احتياطية صالحة."
+                        }
+                    }
+                }
+
             }
             .listRowBackground(Theme.surface)
             }
@@ -154,6 +206,12 @@ struct SettingsView: View {
             .sheet(item: $editingClass) { ref in
                 ClassDetailView(schoolClass: classBinding(ref.id))
                     .accentColor(Theme.deepBrown)
+            }
+            .alert(backupMessage ?? "", isPresented: Binding(
+                get: { backupMessage != nil },
+                set: { if !$0 { backupMessage = nil } }
+            )) {
+                Button("حسنًا", role: .cancel) {}
             }
             .navigationTitle("الإعدادات")
             .navigationBarTitleDisplayMode(.inline)
