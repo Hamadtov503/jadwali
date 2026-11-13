@@ -43,11 +43,13 @@ struct SettingsView: View {
                         }
                     }
                 }
+                .tightSectionSpacing(2)
 
                 Section {
                     plusButton(.subject)
                 }
                 .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
 
                 Section(header: SectionTitle("الفصول")) {
                     ForEach(s.classes) { c in
@@ -81,11 +83,13 @@ struct SettingsView: View {
                         }
                     }
                 }
+                .tightSectionSpacing(2)
 
                 Section {
                     plusButton(.klass)
                 }
                 .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
 
                 Section(header: SectionTitle("اليوم الدراسي")) {
                     DatePicker(selection: dayStartBinding, displayedComponents: .hourAndMinute) {
@@ -144,6 +148,7 @@ struct SettingsView: View {
 
             }
             .listRowBackground(Theme.surface)
+            .environment(\.colorScheme, .dark)
             }
             .appFormBackground()
             .sheet(item: $editingClass) { ref in
@@ -206,9 +211,9 @@ struct SettingsView: View {
             } label: {
                 Image(systemName: "plus")
                     .font(.system(size: 22, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 44, height: 44)
-                    .background(Circle().fill(Color.white.opacity(0.15)))
+                    .foregroundColor(Theme.onBg)
+                    .frame(width: 40, height: 40)
+                    .background(Circle().fill(Theme.onBg.opacity(0.08)))
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
@@ -313,6 +318,7 @@ struct ClassDetailView: View {
                     }
                 }
                 .listRowBackground(Theme.surface)
+                .environment(\.colorScheme, .dark)
             }
             .appFormBackground()
             .navigationTitle(schoolClass.name)

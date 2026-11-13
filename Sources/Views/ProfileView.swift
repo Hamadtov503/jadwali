@@ -125,7 +125,7 @@ struct ProfileView: View {
                             if avatar.image != nil {
                                 Button("حذف الصورة") { avatar.remove() }
                                     .font(.footnote.weight(.semibold))
-                                    .foregroundColor(.white.opacity(0.85))
+                                    .foregroundColor(Theme.onBg)
                                     .buttonStyle(.plain)
                             }
                         }
@@ -143,6 +143,7 @@ struct ProfileView: View {
                 }
             }
             .listRowBackground(Theme.surface)
+            .environment(\.colorScheme, .dark)
             }
             .appFormBackground()
             .navigationTitle("الملف الشخصي")

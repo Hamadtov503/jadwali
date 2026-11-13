@@ -7,9 +7,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         let bar = UINavigationBarAppearance()
         bar.configureWithTransparentBackground()
         bar.backgroundColor = Theme.uiBackground
-        bar.titleTextAttributes = [.foregroundColor: UIColor.white]
-        bar.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
-        UINavigationBar.appearance().tintColor = UIColor(hex: 0xF7A65A)
+        bar.titleTextAttributes = [.foregroundColor: Theme.uiOnBg]
+        bar.largeTitleTextAttributes = [.foregroundColor: Theme.uiOnBg]
+        UINavigationBar.appearance().tintColor = UIColor(hex: 0xC2620F)
         UINavigationBar.appearance().standardAppearance = bar
         UINavigationBar.appearance().scrollEdgeAppearance = bar
         UINavigationBar.appearance().compactAppearance = bar

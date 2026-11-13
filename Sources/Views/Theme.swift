@@ -15,16 +15,19 @@ enum Theme {
         UIColor { $0.userInterfaceStyle == .dark ? UIColor(hex: dark) : UIColor(hex: light) }
     }
 
-    static let uiBackground = UIColor(hex: 0x4A3326)
+    /// الخلفية: بني فاتح.
+    static let uiBackground = UIColor(hex: 0xEADBC8)
     static let bg = Color(uiBackground)
-    /// النص فوق الخلفية الخضراء الغامقة.
-    static let onBg = Color.white
-    static let uiSurface = UIColor(hex: 0xF5ECE2)
+    /// النص فوق الخلفية الفاتحة.
+    static let uiOnBg = UIColor(hex: 0x3A281D)
+    static let onBg = Color(uiOnBg)
+    /// البطاقات: بني غامق.
+    static let uiSurface = UIColor(hex: 0x4A3326)
     static let surface = Color(uiSurface)
-    static let surface2 = Color(UIColor(hex: 0xE6D5C3))
-    static let fg = Color(UIColor(hex: 0x2B1E16))
-    static let muted = Color(UIColor(hex: 0x6E5848))
-    static let line = Color(UIColor(hex: 0xD9C4AD))
+    static let surface2 = Color(UIColor(hex: 0x5F4535))
+    static let fg = Color(UIColor(hex: 0xF7EEE4))
+    static let muted = Color(UIColor(hex: 0xCDB8A3))
+    static let line = Color(UIColor(hex: 0x76594A))
 
     static let green = Color(dynamic(0x2E9E6B, 0x3DBB82))
     static let orange = Color(dynamic(0xEE8427, 0xF59A45))
@@ -80,11 +83,25 @@ extension View {
     /// يجعل خلفية النماذج (Form) مثل خلفية التطبيق.
     @ViewBuilder
     func appFormBackground() -> some View {
-        if #available(iOS 16.0, *) {
+        if #available(iOS 17.0, *) {
+            self.scrollContentBackground(.hidden)
+                .listSectionSpacing(.compact)
+                .background(Theme.bg.ignoresSafeArea())
+        } else if #available(iOS 16.0, *) {
             self.scrollContentBackground(.hidden)
                 .background(Theme.bg.ignoresSafeArea())
         } else {
             self.background(Theme.bg.ignoresSafeArea())
+        }
+    }
+
+    /// مسافة صغيرة بعد القسم (iOS 17 فما بعد).
+    @ViewBuilder
+    func tightSectionSpacing(_ v: CGFloat) -> some View {
+        if #available(iOS 17.0, *) {
+            self.listSectionSpacing(v)
+        } else {
+            self
         }
     }
 
@@ -177,11 +194,11 @@ func SectionTitle(_ title: String) -> some View {
         if let icon = icons[title] {
             Image(systemName: icon)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(Color(UIColor(hex: 0xF7A65A)))
+                .foregroundColor(SubjectColor.orange.ink)
         }
         Text(title)
             .font(.subheadline.weight(.semibold))
-            .foregroundColor(Color.white.opacity(0.92))
+            .foregroundColor(Theme.onBg)
     }
     .textCase(nil)
 }

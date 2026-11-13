@@ -44,11 +44,11 @@ struct DayView: View {
                                 .foregroundColor(Theme.orange)
                             Text("إجازة نهاية الأسبوع")
                                 .font(.system(.title3, design: .rounded).weight(.semibold))
-                                .foregroundColor(Theme.deepBrown)
+                                .foregroundColor(Theme.fg)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 40)
-                        .card(Theme.lightBrown)
+                        .card()
                     } else {
                     SummaryCard(items: items, isToday: isToday, now: now, day: selectedDay)
 
@@ -115,7 +115,7 @@ struct DayStrip: View {
                             .font(.caption.weight(d == today ? .semibold : .medium))
                             .lineLimit(1)
                             .minimumScaleFactor(0.6)
-                            .foregroundColor(selected ? Color.white.opacity(0.85) : (d == today ? SubjectColor.orange.ink : Theme.muted))
+                            .foregroundColor(selected ? Color.white.opacity(0.85) : (d == today ? Theme.orange : Theme.muted))
                         Text(Fmt.dayNumber(Weekdays.date(of: d)))
                             .font(.system(.title3, design: .rounded).weight(.semibold).monospacedDigit())
                             .foregroundColor(selected ? .white : Theme.fg)
@@ -312,7 +312,7 @@ struct ClassRow: View {
                     .padding(.bottom, 12)
                 }
             }
-            .background(state == .now ? item.color.soft : Theme.surface)
+            .background(Theme.surface)
             .overlay(alignment: .leading) {
                 Rectangle().fill(item.color.main).frame(width: 4)
             }

@@ -69,10 +69,10 @@ struct WeekView: View {
                         Button { confirmClear = true } label: {
                             Label("إفراغ الجدول", systemImage: "trash")
                                 .font(.subheadline.weight(.semibold))
-                                .foregroundColor(.white)
+                                .foregroundColor(.red)
                                 .padding(.horizontal, 22)
                                 .padding(.vertical, 11)
-                                .background(Capsule().fill(Color.white.opacity(0.14)))
+                                .background(Capsule().fill(Theme.onBg.opacity(0.08)))
                         }
                         .buttonStyle(.plain)
                         .padding(.top, 16)

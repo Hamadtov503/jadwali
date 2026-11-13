@@ -93,7 +93,7 @@ struct RootView: View {
                 HStack(spacing: 10) {
                     Button { showProfile = true } label: {
                         AvatarView(name: userName, size: 42)
-                            .overlay(Circle().stroke(Color.white.opacity(0.6), lineWidth: 1.5))
+                            .overlay(Circle().stroke(Theme.onBg.opacity(0.25), lineWidth: 1.5))
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("الملف الشخصي")
