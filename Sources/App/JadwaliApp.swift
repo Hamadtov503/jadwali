@@ -29,7 +29,6 @@ struct JadwaliApp: App {
         WindowGroup {
             LaunchContainer()
                 .environmentObject(store)
-                .environment(\.layoutDirection, .rightToLeft)
                 .environment(\.locale, Fmt.locale)
                 .accentColor(Theme.orange)
                 .preferredColorScheme(.light)

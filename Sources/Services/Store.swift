@@ -28,6 +28,14 @@ final class Store: ObservableObject {
             settings = saved.settings ?? SchoolSettings()
             // الإصدار السابق كان يضع 5 دقائق بين الحصص افتراضيًا.
             if (saved.rev ?? 1) < 2 { settings.passing = 0 }
+            // الأسماء المحفوظة بأرقام إنجليزية تُحوَّل إلى أرقام عربية.
+            settings.subjects = settings.subjects.map(Fmt.ar)
+            for i in settings.classes.indices { settings.classes[i].name = Fmt.ar(settings.classes[i].name) }
+            for i in items.indices {
+                items[i].subject = Fmt.ar(items[i].subject)
+                items[i].room = Fmt.ar(items[i].room)
+                items[i].className = items[i].className.map(Fmt.ar)
+            }
         } else {
             items = ClassItem.examples
             isExample = true

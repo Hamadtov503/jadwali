@@ -28,7 +28,7 @@ struct EditorView: View {
                         }
                         .padding(.vertical, 6)
                     }
-                    TextField("المادة", text: $item.subject)
+                    TextField("المادة", text: $item.subject.arabicDigits)
                         .focused($subjectFocused)
                 }
 
@@ -80,7 +80,7 @@ struct EditorView: View {
                 }
 
                 Section {
-                    TextField("القاعة", text: $item.room)
+                    TextField("القاعة", text: $item.room.arabicDigits)
                 }
 
                 if item.classID == nil {

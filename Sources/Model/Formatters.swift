@@ -59,3 +59,12 @@ enum Fmt {
         ar(longDate.string(from: date))
     }
 }
+
+import SwiftUI
+
+extension Binding where Value == String {
+    /// يحوّل الأرقام الإنجليزية المكتوبة إلى أرقام عربية أثناء الكتابة.
+    var arabicDigits: Binding<String> {
+        Binding(get: { wrappedValue }, set: { wrappedValue = Fmt.ar($0) })
+    }
+}

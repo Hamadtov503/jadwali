@@ -36,7 +36,6 @@ struct RootView: View {
                     .sheet(isPresented: $showSettings) {
                         SettingsView(settings: store.settings)
                             .environmentObject(store)
-                            .environment(\.layoutDirection, .rightToLeft)
                             .environment(\.locale, Fmt.locale)
                 .accentColor(Theme.orange)
                     }
@@ -66,7 +65,6 @@ struct RootView: View {
         .sheet(item: $editing) { target in
             EditorView(target: target)
                 .environmentObject(store)
-                .environment(\.layoutDirection, .rightToLeft)
                 .environment(\.locale, Fmt.locale)
                 .accentColor(Theme.orange)
         }
@@ -94,7 +92,6 @@ struct RootView: View {
                     .accessibilityLabel("الملف الشخصي")
                         .sheet(isPresented: $showProfile) {
                             ProfileView()
-                                .environment(\.layoutDirection, .rightToLeft)
                                 .environment(\.locale, Fmt.locale)
                 .accentColor(Theme.orange)
                         }

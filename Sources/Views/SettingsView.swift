@@ -29,7 +29,7 @@ struct SettingsView: View {
                     if adding == .subject {
                         HStack(spacing: 12) {
                             SettingIcon(name: "book.fill", color: Theme.green)
-                            TextField("مادة جديدة", text: $newSubject)
+                            TextField("مادة جديدة", text: $newSubject.arabicDigits)
                                 .focused($focus, equals: .subject)
                                 .submitLabel(.done)
                                 .onSubmit { addSubject(); adding = nil }
@@ -54,7 +54,7 @@ struct SettingsView: View {
                     if adding == .klass {
                         HStack(spacing: 12) {
                             SettingIcon(name: "person.3.fill", color: Theme.green)
-                            TextField("فصل جديد", text: $newClass)
+                            TextField("فصل جديد", text: $newClass.arabicDigits)
                                 .focused($focus, equals: .klass)
                                 .submitLabel(.done)
                                 .onSubmit { addClass(); adding = nil }
@@ -271,7 +271,7 @@ struct ClassDetailView: View {
             Section {
                 HStack(spacing: 12) {
                     SettingIcon(name: "person.3.fill", color: schoolClass.color.main)
-                    TextField("اسم الفصل", text: $schoolClass.name)
+                    TextField("اسم الفصل", text: $schoolClass.name.arabicDigits)
                 }
             }
             Section(header: SectionTitle("اللون")) {
