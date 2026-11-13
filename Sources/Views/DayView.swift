@@ -80,7 +80,7 @@ struct DayView: View {
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.bottom, 110)
+                .padding(.bottom, 24)
             }
         }
     }
@@ -253,7 +253,7 @@ struct GapRow: View {
                 .font(.caption)
                 .foregroundColor(Theme.muted)
         }
-        .padding(.leading, 64)
+        .padding(.leading, 8)
     }
 }
 
@@ -265,21 +265,13 @@ struct FreePeriodRow: View {
     let onTap: () -> Void
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(Fmt.short(start))
-                    .font(.subheadline.monospacedDigit())
-                    .foregroundColor(Theme.muted)
-                Text(Fmt.short(end))
-                    .font(.caption.monospacedDigit())
-                    .foregroundColor(Theme.muted)
-            }
-            .frame(width: 52, alignment: .leading)
-
-            Button(action: onTap) {
+        Button(action: onTap) {
                 HStack {
                     Text("الحصة \(period)")
                         .font(.subheadline.weight(.medium))
+                        .foregroundColor(Theme.muted)
+                    Text(Fmt.range(start, end))
+                        .font(.subheadline.monospacedDigit())
                         .foregroundColor(Theme.muted)
                     Spacer()
                     Image(systemName: "plus.circle")
@@ -297,8 +289,7 @@ struct FreePeriodRow: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel("إضافة حصة في الحصة \(period)")
-        }
-        .opacity(isPast ? 0.5 : 1)
+            .opacity(isPast ? 0.5 : 1)
     }
 }
 
@@ -311,22 +302,9 @@ struct ClassRow: View {
     let onTap: () -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(Fmt.short(item.start))
-                    .font(.subheadline.weight(.semibold).monospacedDigit())
-                    .foregroundColor(Theme.fg)
-                Text(Fmt.short(item.end))
-                    .font(.caption.monospacedDigit())
-                    .foregroundColor(Theme.muted)
-            }
-            .frame(width: 52, alignment: .leading)
-            .padding(.top, 14)
-
-            Button(action: onTap) { card }
-                .buttonStyle(.plain)
-        }
-        .opacity(state == .past ? 0.55 : 1)
+        Button(action: onTap) { card }
+            .buttonStyle(.plain)
+            .opacity(state == .past ? 0.55 : 1)
     }
 
     private var card: some View {
@@ -352,10 +330,18 @@ struct ClassRow: View {
                         .background(Capsule().fill(item.color.soft))
                 }
             }
-            let metaLine = ([item.period.map { "الحصة \($0)" }].compactMap { $0 } + (item.meta.isEmpty ? [] : [item.meta]))
-                .joined(separator: " · ")
-            if !metaLine.isEmpty {
-                Text(metaLine)
+            HStack(spacing: 6) {
+                if let p = item.period {
+                    Text("الحصة \(p)")
+                        .font(.footnote.weight(.medium))
+                        .foregroundColor(item.color.ink)
+                }
+                Text(Fmt.range(item.start, item.end))
+                    .font(.footnote.weight(.semibold).monospacedDigit())
+                    .foregroundColor(Theme.fg)
+            }
+            if !item.meta.isEmpty {
+                Text(item.meta)
                     .font(.footnote)
                     .foregroundColor(Theme.muted)
             }

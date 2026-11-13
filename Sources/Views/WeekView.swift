@@ -38,7 +38,7 @@ struct WeekView: View {
                         .shadow(color: Color.black.opacity(0.05), radius: 10, x: 0, y: 4)
                         .padding(.horizontal, 16)
                     }
-                    .padding(.bottom, 110)
+                    .padding(.bottom, 24)
                 }
             }
         }
@@ -129,7 +129,7 @@ struct WeekView: View {
                 .font(.system(.footnote, design: .rounded).weight(.semibold))
                 .foregroundColor(Theme.fg)
                 .lineLimit(height < 46 ? 1 : 2)
-            Text("\(Fmt.short(item.start)) – \(Fmt.short(item.end))")
+            Text(Fmt.range(item.start, item.end))
                 .font(.caption2.monospacedDigit())
                 .foregroundColor(item.color.ink)
             if height >= 60 && !item.room.isEmpty {

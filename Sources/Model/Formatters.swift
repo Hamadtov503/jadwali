@@ -15,6 +15,11 @@ enum Fmt {
         return "\(h12):" + String(format: "%02d", mm)
     }
 
+    /// 7:00 - 7:45 (من اليسار إلى اليمين دائمًا، حتى داخل واجهة عربية)
+    static func range(_ a: Int, _ b: Int) -> String {
+        "\u{2066}\(short(a)) - \(short(b))\u{2069}"
+    }
+
     static func duration(_ d: Int) -> String {
         if d < 60 { return "\(d) د" }
         let h = d / 60, m = d % 60

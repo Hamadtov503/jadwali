@@ -31,7 +31,7 @@ struct EditorView: View {
                 Section {
                     Picker("الوقت", selection: periodBinding) {
                         ForEach(Array(slots.enumerated()), id: \.offset) { i, slot in
-                            Text("الحصة \(i + 1) · \(Fmt.short(slot.start))–\(Fmt.short(slot.end))").tag(i + 1)
+                            Text("الحصة \(i + 1) · \(Fmt.range(slot.start, slot.end))").tag(i + 1)
                         }
                         Text("وقت مخصص").tag(0)
                     }

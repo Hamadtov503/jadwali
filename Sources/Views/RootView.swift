@@ -22,7 +22,7 @@ struct RootView: View {
     private var mode: ViewMode { ViewMode(rawValue: modeRaw) ?? .day }
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
+        ZStack {
             Theme.bg.ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -49,10 +49,6 @@ struct RootView: View {
                     WeekView(onEdit: edit)
                 }
             }
-
-            addButton
-                .padding(.horizontal, 20)
-                .padding(.bottom, 16)
         }
         .sheet(item: $editing) { target in
             EditorView(target: target)
@@ -137,23 +133,6 @@ struct RootView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(SubjectColor.orange.soft))
-    }
-
-    private var addButton: some View {
-        Button { add(mode == .day ? selectedDay : Weekdays.weekday(of: Date()), nil) } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "plus")
-                    .font(.system(size: 16, weight: .bold))
-                Text("إضافة حصة")
-                    .font(.system(.headline, design: .rounded))
-            }
-            .foregroundColor(.white)
-            .padding(.horizontal, 22)
-            .padding(.vertical, 14)
-            .background(Capsule().fill(Theme.green))
-            .shadow(color: Theme.green.opacity(0.35), radius: 12, x: 0, y: 6)
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Actions
