@@ -9,6 +9,9 @@ struct SettingsView: View {
     @State private var newSubject = ""
     @State private var newClass = ""
     @State private var adding: AddKind?
+    @State private var editingClass: ClassRef?
+
+    struct ClassRef: Identifiable { let id: UUID }
     @FocusState private var focus: AddKind?
 
     enum AddKind: Hashable { case subject, klass }
@@ -21,7 +24,7 @@ struct SettingsView: View {
         NavigationView {
             Form {
  Group {
-                Section(header: SectionTitle("المواد الدراسية"), footer: plusButton(.subject)) {
+                Section(header: SectionTitle("المواد الدراسية")) {
                     ForEach(s.subjects, id: \.self) { name in
                         label(name, "book.fill", Theme.blue)
                     }
@@ -43,13 +46,25 @@ struct SettingsView: View {
                     }
                 }
 
-                Section(header: SectionTitle("الفصول"), footer: plusButton(.klass)) {
-                    ForEach($s.classes) { $c in
-                        NavigationLink {
-                            ClassDetailView(schoolClass: $c)
-                        } label: {
-                            label(c.name, "person.3.fill", c.color.main)
+                Section {
+                    plusButton(.subject)
+                }
+                .listRowBackground(Color.clear)
+
+                Section(header: SectionTitle("الفصول")) {
+                    ForEach(s.classes) { c in
+                        Button { editingClass = ClassRef(id: c.id) } label: {
+                            HStack {
+                                label(c.name, "person.3.fill", c.color.main)
+                                    .foregroundColor(Theme.fg)
+                                Spacer()
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(Theme.muted)
+                            }
+                            .contentShape(Rectangle())
                         }
+                        .buttonStyle(.plain)
                     }
                     .onDelete { s.classes.remove(atOffsets: $0) }
                     if adding == .klass {
@@ -68,6 +83,11 @@ struct SettingsView: View {
                         }
                     }
                 }
+
+                Section {
+                    plusButton(.klass)
+                }
+                .listRowBackground(Color.clear)
 
                 Section(header: SectionTitle("اليوم الدراسي")) {
                     DatePicker(selection: dayStartBinding, displayedComponents: .hourAndMinute) {
@@ -136,6 +156,10 @@ struct SettingsView: View {
             .listRowBackground(Theme.surface)
             }
             .appFormBackground()
+            .sheet(item: $editingClass) { ref in
+                ClassDetailView(schoolClass: classBinding(ref.id))
+                    .accentColor(Theme.orange)
+            }
             .navigationTitle("الإعدادات")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -171,6 +195,15 @@ struct SettingsView: View {
     }
 
     // MARK: - Helpers
+
+    private func classBinding(_ id: UUID) -> Binding<SchoolClass> {
+        Binding(
+            get: { s.classes.first { $0.id == id } ?? SchoolClass(id: id, name: "", color: .blue) },
+            set: { new in
+                if let i = s.classes.firstIndex(where: { $0.id == id }) { s.classes[i] = new }
+            }
+        )
+    }
 
     private func cancelButton(_ clear: @escaping () -> Void) -> some View {
         Button {
@@ -288,34 +321,42 @@ struct SettingsView: View {
 
 struct ClassDetailView: View {
     @Binding var schoolClass: SchoolClass
+    @Environment(\.dismiss) private var dismiss
     @FocusState private var nameFocused: Bool
 
     var body: some View {
-        Form {
- Group {
-            Section {
-                HStack(spacing: 12) {
-                    SettingIcon(name: "person.3.fill", color: schoolClass.color.main)
-                    TextField("اسم الفصل", text: $schoolClass.name.arabicDigits)
-                        .focused($nameFocused)
+        NavigationView {
+            Form {
+                Group {
+                    Section {
+                        HStack(spacing: 12) {
+                            SettingIcon(name: "person.3.fill", color: schoolClass.color.main)
+                            TextField("اسم الفصل", text: $schoolClass.name.arabicDigits)
+                                .focused($nameFocused)
+                        }
+                    }
+                    Section(header: SectionTitle("اللون")) {
+                        ColorGrid(selection: $schoolClass.color)
+                    }
+                }
+                .listRowBackground(Theme.surface)
+            }
+            .appFormBackground()
+            .navigationTitle(schoolClass.name)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("تم") { dismiss() }
+                        .font(.body.weight(.semibold))
+                }
+                ToolbarItemGroup(placement: .keyboard) {
+                    if nameFocused {
+                        ArabicDigitsBar { schoolClass.name += $0 }
+                    }
                 }
             }
-            Section(header: SectionTitle("اللون")) {
-                ColorGrid(selection: $schoolClass.color)
-            }
         }
-        .listRowBackground(Theme.surface)
-        }
-        .appFormBackground()
-        .navigationTitle(schoolClass.name)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                if nameFocused {
-                    ArabicDigitsBar { schoolClass.name += $0 }
-                }
-            }
-        }
+        .navigationViewStyle(.stack)
     }
 }
 
