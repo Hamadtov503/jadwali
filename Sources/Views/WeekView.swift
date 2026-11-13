@@ -37,6 +37,20 @@ struct WeekView: View {
                             }
                         }
                     }
+                    .background(alignment: .topLeading) {
+                        if let idx = days.firstIndex(of: today) {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Theme.green.opacity(0.12))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .stroke(Theme.green, lineWidth: 2)
+                                )
+                                .frame(width: side + 8)
+                                .frame(maxHeight: .infinity)
+                                .padding(.vertical, -5)
+                                .padding(.leading, labelWidth + spacing + CGFloat(idx) * (side + spacing) - 4)
+                        }
+                    }
                     .padding(12)
                     .card()
                     .padding(.horizontal, 16)
@@ -74,7 +88,7 @@ struct WeekView: View {
 
     private func periodLabel(_ n: Int, _ slot: SchoolSettings.Slot) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text("الحصة \(n)")
+            Text("الحصة \(Fmt.n(n))")
                 .font(.caption.weight(.semibold))
                 .foregroundColor(Theme.fg)
             Text(Fmt.range(slot.start, slot.end))

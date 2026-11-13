@@ -130,7 +130,7 @@ struct AssignPopup: View {
         let slot = target.period <= slots.count ? slots[target.period - 1] : (start: 0, end: 0)
         return HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(Weekdays.names[target.day]) · الحصة \(target.period)")
+                Text("\(Weekdays.names[target.day]) · الحصة \(Fmt.n(target.period))")
                     .font(.system(.headline, design: .rounded))
                     .foregroundColor(Theme.fg)
                 Text(Fmt.range(slot.start, slot.end))

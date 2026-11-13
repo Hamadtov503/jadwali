@@ -45,7 +45,7 @@ struct RootView: View {
                 }
 
                 if mode == .day {
-                    DayView(selectedDay: $selectedDay, onEdit: edit, onAdd: add)
+                    DayView(selectedDay: $selectedDay)
                 } else {
                     WeekView(onTap: { assign($0, $1) })
                 }
@@ -153,31 +153,5 @@ struct RootView: View {
 
     private func closePopup() {
         withAnimation(.easeOut(duration: 0.15)) { assigning = nil }
-    }
-
-    private func edit(_ item: ClassItem) {
-        if let p = item.period {
-            assign(item.weekday, p)
-        } else {
-            editing = EditorTarget(item: item, isNew: false)
-        }
-    }
-
-    private func add(_ day: Int, _ period: Int?) {
-        if let p = period {
-            assign(day, p)
-            return
-        }
-        let slots = store.settings.periods()
-        var item = ClassItem(subject: "", weekday: day, start: 0, end: 0, color: store.nextColor)
-        if let n = period ?? store.freePeriod(on: day), n >= 1, n <= slots.count {
-            item.period = n
-            item.start = slots[n - 1].start
-            item.end = slots[n - 1].end
-        } else {
-            item.start = store.suggestedStart(on: day)
-            item.end = min(item.start + store.settings.periodLength, 23 * 60 + 59)
-        }
-        editing = EditorTarget(item: item, isNew: true)
     }
 }

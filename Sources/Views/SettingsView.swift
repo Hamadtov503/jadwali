@@ -62,7 +62,7 @@ struct SettingsView: View {
                 Section(header: Text("اليوم الدراسي")) {
                     DatePicker("بداية الدوام", selection: dayStartBinding, displayedComponents: .hourAndMinute)
                     Stepper(value: periodsBinding, in: 1...12) {
-                        row("عدد الحصص", "\(s.periodsPerDay)")
+                        row("عدد الحصص", Fmt.n(s.periodsPerDay))
                     }
                     Stepper(value: $s.periodLength, in: 20...120, step: 5) {
                         row("مدة الحصة", Fmt.duration(s.periodLength))
@@ -97,7 +97,7 @@ struct SettingsView: View {
                 Section(header: Text("توقيت الحصص")) {
                     let slots = s.periods()
                     ForEach(Array(slots.enumerated()), id: \.offset) { i, slot in
-                        row("الحصة \(i + 1)", Fmt.range(slot.start, slot.end))
+                        row("الحصة \(Fmt.n(i + 1))", Fmt.range(slot.start, slot.end))
                         if let b = s.breakSlot(), i + 1 == s.breakAfter {
                             row("الفسحة", Fmt.range(b.start, b.end))
                                 .foregroundColor(SubjectColor.orange.ink)
@@ -176,7 +176,7 @@ struct SettingsView: View {
     private func ordinal(_ n: Int) -> String {
         let names = ["الأولى", "الثانية", "الثالثة", "الرابعة", "الخامسة", "السادسة",
                      "السابعة", "الثامنة", "التاسعة", "العاشرة", "الحادية عشرة", "الثانية عشرة"]
-        return n >= 1 && n <= names.count ? names[n - 1] : "\(n)"
+        return n >= 1 && n <= names.count ? names[n - 1] : Fmt.n(n)
     }
 
     private var dayStartBinding: Binding<Date> {

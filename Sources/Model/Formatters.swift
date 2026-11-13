@@ -3,36 +3,48 @@ import Foundation
 enum Fmt {
     static let locale = Locale(identifier: "ar")
 
-    /// 7:30 ص
+    /// يحوّل الأرقام إلى أرقام عربية (٠١٢٣٤٥٦٧٨٩).
+    static func ar(_ s: String) -> String {
+        String(s.map { c -> Character in
+            if let d = c.wholeNumberValue, c.isASCII {
+                return Character(UnicodeScalar(0x0660 + d)!)
+            }
+            return c
+        })
+    }
+
+    static func n(_ v: Int) -> String { ar(String(v)) }
+
+    /// ٧:٣٠ ص
     static func time(_ m: Int) -> String {
         short(m) + " " + (m / 60 < 12 ? "ص" : "م")
     }
 
-    /// 7:30
+    /// ٧:٣٠
     static func short(_ m: Int) -> String {
         let h = m / 60, mm = m % 60
         let h12 = h % 12 == 0 ? 12 : h % 12
-        return "\(h12):" + String(format: "%02d", mm)
+        return ar("\(h12):" + String(format: "%02d", mm))
     }
 
-    /// 7:00 - 7:45 (من اليسار إلى اليمين دائمًا، حتى داخل واجهة عربية)
+    /// ٧:٠٠ - ٧:٤٥ (البداية على اليمين دائمًا)
     static func range(_ a: Int, _ b: Int) -> String {
-        "\u{2066}\(short(a)) - \(short(b))\u{2069}"
+        "\u{2067}\(short(a)) - \(short(b))\u{2069}"
     }
 
     static func duration(_ d: Int) -> String {
-        if d < 60 { return "\(d) د" }
+        if d < 60 { return "\(n(d)) د" }
         let h = d / 60, m = d % 60
-        if m > 0 { return "\(h) س \(m) د" }
+        if m > 0 { return "\(n(h)) س \(n(m)) د" }
         switch h {
         case 1: return "ساعة"
         case 2: return "ساعتان"
-        default: return "\(h) ساعات"
+        default: return "\(n(h)) ساعات"
         }
     }
 
     static func dayNumber(_ date: Date) -> String {
-        String(Weekdays.calendar.component(.day, from: date))
+        n(Weekdays.calendar.component(.day, from: date))
     }
 
     private static let longDate: DateFormatter = {
@@ -44,6 +56,6 @@ enum Fmt {
     }()
 
     static func today(_ date: Date = Date()) -> String {
-        longDate.string(from: date)
+        ar(longDate.string(from: date))
     }
 }

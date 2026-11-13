@@ -66,7 +66,7 @@ struct EditorView: View {
                 Section(header: Text("الحصة")) {
                     LazyVGrid(columns: grid(2), spacing: 8) {
                         ForEach(Array(slots.enumerated()), id: \.offset) { i, slot in
-                            Chip(title: "\(i + 1) · \(Fmt.range(slot.start, slot.end))",
+                            Chip(title: "\(Fmt.n(i + 1)) · \(Fmt.range(slot.start, slot.end))",
                                  selected: item.period == i + 1) { setPeriod(i + 1) }
                         }
                         Chip(title: "وقت مخصص", selected: item.period == nil) { setPeriod(0) }

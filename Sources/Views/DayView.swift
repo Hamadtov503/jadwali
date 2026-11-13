@@ -3,57 +3,12 @@ import SwiftUI
 struct DayView: View {
     @EnvironmentObject var store: Store
     @Binding var selectedDay: Int
-    var onEdit: (ClassItem) -> Void
-    var onAdd: (Int, Int?) -> Void
-
-    /// عنصر في الجدول: حصة مسجّلة، أو حصة فارغة، أو الفسحة.
-    enum Entry: Identifiable {
-        case lesson(ClassItem)
-        case free(period: Int, start: Int, end: Int)
-        case rest(start: Int, end: Int)
-
-        var id: String {
-            switch self {
-            case .lesson(let c): return c.id.uuidString
-            case .free(let p, _, _): return "free-\(p)"
-            case .rest: return "rest"
-            }
-        }
-        var start: Int {
-            switch self {
-            case .lesson(let c): return c.start
-            case .free(_, let s, _), .rest(let s, _): return s
-            }
-        }
-        var end: Int {
-            switch self {
-            case .lesson(let c): return c.end
-            case .free(_, _, let e), .rest(_, let e): return e
-            }
-        }
-    }
-
-    private func entries(for items: [ClassItem]) -> [Entry] {
-        var out = items.map { Entry.lesson($0) }
-        if store.isSchoolDay(selectedDay) {
-            for (i, slot) in store.settings.periods().enumerated() {
-                let busy = items.contains { $0.start < slot.end && slot.start < $0.end }
-                if !busy { out.append(.free(period: i + 1, start: slot.start, end: slot.end)) }
-            }
-            if let b = store.settings.breakSlot(),
-               !items.contains(where: { $0.start < b.end && b.start < $0.end }) {
-                out.append(.rest(start: b.start, end: b.end))
-            }
-        }
-        return out.sorted { $0.start < $1.start }
-    }
 
     var body: some View {
         TimelineView(.periodic(from: Date(), by: 30)) { context in
             let today = Weekdays.weekday(of: context.date)
             let now = Weekdays.minutes(of: context.date)
             let items = store.classes(on: selectedDay)
-            let list = entries(for: items)
             let isToday = selectedDay == today
 
             ScrollView {
@@ -61,26 +16,19 @@ struct DayView: View {
                     DayStrip(selectedDay: $selectedDay, today: today)
                     SummaryCard(items: items, isToday: isToday, now: now, day: selectedDay)
 
-                    if list.isEmpty {
-                        emptyState(isToday: isToday)
+                    if items.isEmpty {
+                        Text(isToday ? "لا توجد حصص اليوم" : "لا توجد حصص يوم \(Weekdays.names[selectedDay])")
+                            .font(.system(.headline, design: .rounded))
+                            .foregroundColor(Theme.muted)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 32)
+                            .card()
                     } else {
                         VStack(spacing: 8) {
-                            ForEach(Array(list.enumerated()), id: \.element.id) { index, entry in
-                                if index > 0 {
-                                    let gap = entry.start - list[index - 1].end
-                                    if gap >= 10 { GapRow(minutes: gap) }
-                                }
-                                let state = rowState(start: entry.start, end: entry.end, isToday: isToday, now: now)
-                                switch entry {
-                                case .lesson(let item):
-                                    ClassRow(item: item, state: state, now: now, onTap: { onEdit(item) })
-                                case .free(let period, let start, let end):
-                                    FreePeriodRow(period: period, start: start, end: end,
-                                                  isPast: state == .past,
-                                                  onTap: { onAdd(selectedDay, period) })
-                                case .rest(let start, let end):
-                                    BreakRow(start: start, end: end, state: state)
-                                }
+                            ForEach(items) { item in
+                                ClassRow(item: item,
+                                         state: rowState(start: item.start, end: item.end, isToday: isToday, now: now),
+                                         now: now)
                             }
                         }
                     }
@@ -96,24 +44,6 @@ struct DayView: View {
         if now >= end { return .past }
         if now >= start { return .now }
         return .upcoming
-    }
-
-    private func emptyState(isToday: Bool) -> some View {
-        VStack(spacing: 12) {
-            Text(isToday ? "لا توجد حصص اليوم" : "لا توجد حصص يوم \(Weekdays.names[selectedDay])")
-                .font(.system(.headline, design: .rounded))
-                .foregroundColor(Theme.fg)
-            Button("إضافة حصة") { onAdd(selectedDay, nil) }
-                .font(.subheadline.weight(.semibold))
-                .foregroundColor(.white)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 10)
-                .background(Capsule().fill(Theme.blue))
-                .buttonStyle(.plain)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 32)
-        .card()
     }
 }
 
@@ -204,7 +134,6 @@ struct SummaryCard: View {
 
     var body: some View {
         let l = lines
-        let total = items.reduce(0) { $0 + $1.duration }
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(l.label)
@@ -226,17 +155,12 @@ struct SummaryCard: View {
             Rectangle().fill(Theme.line).frame(width: 1, height: 44)
 
             VStack(spacing: 2) {
-                Text("\(items.count)")
+                Text(Fmt.n(items.count))
                     .font(.system(.title2, design: .rounded).weight(.bold).monospacedDigit())
                     .foregroundColor(Theme.fg)
                 Text(items.count == 1 ? "حصة" : "حصص")
                     .font(.caption)
                     .foregroundColor(Theme.muted)
-                if total > 0 {
-                    Text(Fmt.duration(total))
-                        .font(.caption2)
-                        .foregroundColor(Theme.muted)
-                }
             }
             .frame(width: 64)
         }
@@ -273,89 +197,6 @@ struct RowLayout<Badge: View, Content: View>: View {
     }
 }
 
-struct GapRow: View {
-    let minutes: Int
-    var body: some View {
-        HStack(spacing: 8) {
-            Rectangle().fill(Theme.line).frame(height: 1)
-            Text(Fmt.duration(minutes))
-                .font(.caption2)
-                .foregroundColor(Theme.muted)
-                .fixedSize()
-            Rectangle().fill(Theme.line).frame(height: 1)
-        }
-        .padding(.horizontal, 24)
-    }
-}
-
-struct BreakRow: View {
-    let start: Int
-    let end: Int
-    let state: ClassRow.RowState
-
-    var body: some View {
-        RowLayout(start: start, end: end, timeColor: SubjectColor.orange.ink, height: 50) {
-            Image(systemName: "cup.and.saucer.fill")
-                .font(.system(size: 15))
-                .foregroundColor(SubjectColor.orange.ink)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.surface.opacity(0.7)))
-                .padding(.vertical, 2)
-        } content: {
-            HStack(spacing: 8) {
-                Text("الفسحة")
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
-                    .foregroundColor(SubjectColor.orange.ink)
-                if state == .now { NowTag() }
-            }
-        }
-        .background(
-            RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
-                .fill(SubjectColor.orange.soft)
-        )
-        .opacity(state == .past ? 0.55 : 1)
-    }
-}
-
-struct FreePeriodRow: View {
-    let period: Int
-    let start: Int
-    let end: Int
-    let isPast: Bool
-    let onTap: () -> Void
-
-    var body: some View {
-        Button(action: onTap) {
-            RowLayout(start: start, end: end) {
-                Text("\(period)")
-                    .font(.system(.subheadline, design: .rounded).weight(.semibold).monospacedDigit())
-                    .foregroundColor(Theme.muted)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .stroke(Theme.line, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
-                    )
-            } content: {
-                HStack(spacing: 6) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text("حصة فارغة")
-                        .font(.subheadline)
-                }
-                .foregroundColor(Theme.muted)
-            }
-            .overlay(
-                RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
-                    .stroke(Theme.line, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
-            )
-            .contentShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("إضافة حصة في الحصة \(period)")
-        .opacity(isPast ? 0.5 : 1)
-    }
-}
-
 struct NowTag: View {
     var body: some View {
         Text("الآن")
@@ -373,15 +214,14 @@ struct ClassRow: View {
     let item: ClassItem
     let state: RowState
     let now: Int
-    let onTap: () -> Void
 
     var body: some View {
-        Button(action: onTap) {
+        Group {
             VStack(spacing: 0) {
                 RowLayout(start: item.start, end: item.end, timeColor: state == .now ? item.color.ink : Theme.muted) {
                     Group {
                         if let p = item.period {
-                            Text("\(p)")
+                            Text(Fmt.n(p))
                                 .font(.system(.subheadline, design: .rounded).weight(.bold).monospacedDigit())
                         } else {
                             Image(systemName: "clock")
@@ -431,9 +271,7 @@ struct ClassRow: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
             .shadow(color: Color.black.opacity(state == .past ? 0 : 0.05), radius: 10, x: 0, y: 4)
-            .contentShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
         }
-        .buttonStyle(.plain)
         .opacity(state == .past ? 0.55 : 1)
     }
 }
