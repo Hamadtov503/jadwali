@@ -40,7 +40,7 @@ struct SchoolSettings: Codable, Equatable {
     var dayStart = 7 * 60
     var periodsPerDay = 7
     var periodLength = 45
-    var passing = 5
+    var passing = 0
     var hasBreak = true
     var breakAfter = 3
     var breakLength = 25

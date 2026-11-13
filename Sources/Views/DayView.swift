@@ -33,7 +33,7 @@ struct DayView: View {
 
     private func entries(for items: [ClassItem]) -> [Entry] {
         var out = items.map { Entry.lesson($0) }
-        if store.isSchoolDay(selectedDay) && !store.isExample {
+        if store.isSchoolDay(selectedDay) {
             for (i, slot) in store.settings.periods().enumerated() {
                 let busy = items.contains { $0.start < slot.end && slot.start < $0.end }
                 if !busy { out.append(.free(period: i + 1, start: slot.start, end: slot.end)) }

@@ -12,6 +12,7 @@ final class Store: ObservableObject {
         var items: [ClassItem]
         var isExample: Bool
         var settings: SchoolSettings?
+        var rev: Int?
     }
 
     private let url: URL
@@ -25,15 +26,18 @@ final class Store: ObservableObject {
             items = saved.items
             isExample = saved.isExample
             settings = saved.settings ?? SchoolSettings()
+            // الإصدار السابق كان يضع 5 دقائق بين الحصص افتراضيًا.
+            if (saved.rev ?? 1) < 2 { settings.passing = 0 }
         } else {
             items = ClassItem.examples
             isExample = true
         }
         reflow()
+        save()
     }
 
     private func save() {
-        let saved = Saved(items: items, isExample: isExample, settings: settings)
+        let saved = Saved(items: items, isExample: isExample, settings: settings, rev: 2)
         guard let data = try? JSONEncoder().encode(saved) else { return }
         try? data.write(to: url, options: .atomic)
     }
