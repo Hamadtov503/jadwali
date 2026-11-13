@@ -21,6 +21,7 @@ struct RootView: View {
     @State private var assigning: AssignTarget?
     @State private var showProfile = false
     @AppStorage("userName") private var userName = ""
+    @Namespace private var modeNS
 
     private var mode: ViewMode { ViewMode(rawValue: modeRaw) ?? .day }
 
@@ -46,11 +47,17 @@ struct RootView: View {
                         .padding(.bottom, 12)
                 }
 
-                if mode == .day {
-                    DayView(selectedDay: $selectedDay)
-                } else {
-                    WeekView(onTap: { assign($0, $1) })
+                ZStack {
+                    if mode == .day {
+                        DayView(selectedDay: $selectedDay)
+                            .transition(.move(edge: .leading).combined(with: .opacity))
+                    } else {
+                        WeekView(onTap: { assign($0, $1) })
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .clipped()
             }
 
             if let target = assigning {
@@ -102,7 +109,7 @@ struct RootView: View {
             HStack(spacing: 2) {
                 ForEach(ViewMode.allCases) { m in
                     Button {
-                        withAnimation(.easeInOut(duration: 0.2)) { modeRaw = m.rawValue }
+                        withAnimation(.spring(response: 0.45, dampingFraction: 0.88)) { modeRaw = m.rawValue }
                     } label: {
                         Text(m.title)
                             .font(.subheadline.weight(.semibold))
@@ -110,9 +117,14 @@ struct RootView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 9)
                             .background(
-                                Capsule()
-                                    .fill(mode == m ? Theme.surface : Color.clear)
-                                    .shadow(color: Color.black.opacity(mode == m ? 0.08 : 0), radius: 6, x: 0, y: 2)
+                                ZStack {
+                                    if mode == m {
+                                        Capsule()
+                                            .fill(Theme.surface)
+                                            .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+                                            .matchedGeometryEffect(id: "mode", in: modeNS)
+                                    }
+                                }
                             )
                             .contentShape(Capsule())
                     }

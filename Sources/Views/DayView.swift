@@ -3,6 +3,23 @@ import SwiftUI
 struct DayView: View {
     @EnvironmentObject var store: Store
     @Binding var selectedDay: Int
+    @State private var forward = true
+
+    private static let slide = Animation.spring(response: 0.45, dampingFraction: 0.88)
+
+    /// يغيّر اليوم بحركة انزلاق في اتجاه اليوم الجديد.
+    private var dayBinding: Binding<Int> {
+        Binding(
+            get: { selectedDay },
+            set: { new in
+                guard new != selectedDay else { return }
+                forward = new > selectedDay
+                DispatchQueue.main.async {
+                    withAnimation(Self.slide) { selectedDay = new }
+                }
+            }
+        )
+    }
 
     var body: some View {
         TimelineView(.periodic(from: Date(), by: 30)) { context in
@@ -13,7 +30,10 @@ struct DayView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    DayStrip(selectedDay: $selectedDay, today: today)
+                    DayStrip(selectedDay: dayBinding, today: today)
+
+                    ZStack(alignment: .top) {
+                    VStack(alignment: .leading, spacing: 16) {
                     if isToday {
                         AlertBanners(items: items, now: now)
                     }
@@ -49,6 +69,12 @@ struct DayView: View {
                         }
                     }
                     }
+                    }
+                    .id(selectedDay)
+                    .transition(.asymmetric(
+                        insertion: .move(edge: forward ? .trailing : .leading).combined(with: .opacity),
+                        removal: .move(edge: forward ? .leading : .trailing).combined(with: .opacity)))
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
@@ -70,6 +96,7 @@ struct DayStrip: View {
     @EnvironmentObject var store: Store
     @Binding var selectedDay: Int
     let today: Int
+    @Namespace private var ns
 
     private var days: [Int] {
         Array(0..<7)
@@ -81,7 +108,7 @@ struct DayStrip: View {
                 let selected = d == selectedDay
                 let colors = store.classes(on: d).prefix(4).map(\.color)
                 Button {
-                    withAnimation(.easeInOut(duration: 0.15)) { selectedDay = d }
+                    selectedDay = d
                 } label: {
                     VStack(spacing: 3) {
                         Text(Weekdays.names[d])
@@ -104,12 +131,15 @@ struct DayStrip: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
                     .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(selected ? Theme.blue : Theme.surface)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(selected ? Theme.blue : Theme.line, lineWidth: 1)
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Theme.surface)
+                            if selected {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Theme.blue)
+                                    .matchedGeometryEffect(id: "selectedDay", in: ns)
+                            }
+                        }
                     )
                 }
                 .buttonStyle(.plain)
