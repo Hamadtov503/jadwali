@@ -137,7 +137,6 @@ struct ProfileView: View {
 
                 Section {
                     HStack(spacing: 12) {
-                        SettingIcon(name: "person.fill", color: Theme.green)
                         TextField("الاسم", text: $name.arabicDigits)
                             .submitLabel(.done)
                     }

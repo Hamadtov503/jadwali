@@ -1,7 +1,7 @@
 import Foundation
 
 enum Fmt {
-    static let locale = Locale(identifier: "ar")
+    static let locale = Locale(identifier: "ar_SA")
 
     /// يحوّل الأرقام إلى أرقام عربية (٠١٢٣٤٥٦٧٨٩).
     static func ar(_ s: String) -> String {

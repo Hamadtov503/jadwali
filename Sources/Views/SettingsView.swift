@@ -5,7 +5,6 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var s: SchoolSettings
-    @State private var confirmClear = false
     @State private var newSubject = ""
     @State private var newClass = ""
     @State private var adding: AddKind?
@@ -31,7 +30,6 @@ struct SettingsView: View {
                     .onDelete { s.subjects.remove(atOffsets: $0) }
                     if adding == .subject {
                         HStack(spacing: 12) {
-                            SettingIcon(name: "book.fill", color: Theme.green)
                             TextField("مادة جديدة", text: $newSubject.arabicDigits)
                                 .focused($focus, equals: .subject)
                                 .submitLabel(.done)
@@ -55,7 +53,8 @@ struct SettingsView: View {
                     ForEach(s.classes) { c in
                         Button { editingClass = ClassRef(id: c.id) } label: {
                             HStack {
-                                label(c.name, "person.3.fill", c.color.main)
+                                Circle().fill(c.color.main).frame(width: 12, height: 12)
+                                Text(c.name)
                                     .foregroundColor(Theme.fg)
                                 Spacer()
                                 Image(systemName: "chevron.left")
@@ -69,7 +68,6 @@ struct SettingsView: View {
                     .onDelete { s.classes.remove(atOffsets: $0) }
                     if adding == .klass {
                         HStack(spacing: 12) {
-                            SettingIcon(name: "person.3.fill", color: Theme.green)
                             TextField("فصل جديد", text: $newClass.arabicDigits)
                                 .focused($focus, equals: .klass)
                                 .submitLabel(.done)
@@ -144,14 +142,6 @@ struct SettingsView: View {
                     }
                 }
 
-                Section {
-                    Button(role: .destructive) { confirmClear = true } label: {
-                        HStack(spacing: 12) {
-                            SettingIcon(name: "trash.fill", color: .red)
-                            Text("حذف كل الحصص")
-                        }
-                    }
-                }
             }
             .listRowBackground(Theme.surface)
             }
@@ -163,14 +153,6 @@ struct SettingsView: View {
             .navigationTitle("الإعدادات")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItemGroup(placement: .keyboard) {
-                    if focus != nil {
-                        ArabicDigitsBar { k in
-                            if focus == .subject { newSubject += k }
-                            if focus == .klass { newClass += k }
-                        }
-                    }
-                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("حفظ") {
                         addSubject()
@@ -185,10 +167,6 @@ struct SettingsView: View {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("إلغاء") { dismiss() }
                 }
-            }
-            .confirmationDialog("حذف كل الحصص؟", isPresented: $confirmClear, titleVisibility: .visible) {
-                Button("حذف", role: .destructive) { store.clearAll() }
-                Button("إلغاء", role: .cancel) {}
             }
         }
         .navigationViewStyle(.stack)
@@ -261,15 +239,11 @@ struct SettingsView: View {
     }
 
     private func label(_ title: String, _ icon: String, _ color: Color) -> some View {
-        HStack(spacing: 12) {
-            SettingIcon(name: icon, color: color)
-            Text(title)
-        }
+        Text(title)
     }
 
     private func row(_ title: String, _ value: String, _ icon: String, _ color: Color) -> some View {
         HStack(spacing: 12) {
-            SettingIcon(name: icon, color: color)
             Text(title)
             Spacer()
             Text(value)
@@ -330,7 +304,6 @@ struct ClassDetailView: View {
                 Group {
                     Section {
                         HStack(spacing: 12) {
-                            SettingIcon(name: "person.3.fill", color: schoolClass.color.main)
                             TextField("اسم الفصل", text: $schoolClass.name.arabicDigits)
                                 .focused($nameFocused)
                         }
@@ -348,11 +321,6 @@ struct ClassDetailView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("تم") { dismiss() }
                         .font(.body.weight(.semibold))
-                }
-                ToolbarItemGroup(placement: .keyboard) {
-                    if nameFocused {
-                        ArabicDigitsBar { schoolClass.name += $0 }
-                    }
                 }
             }
         }

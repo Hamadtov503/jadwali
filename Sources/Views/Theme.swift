@@ -126,27 +126,6 @@ struct ColorGrid: View {
     }
 }
 
-/// صف أرقام عربية فوق لوحة المفاتيح.
-struct ArabicDigitsBar: View {
-    var onTap: (String) -> Void
-    private let keys = ["١", "٢", "٣", "٤", "٥", "٦", "٧", "٨", "٩", "٠", "/"]
-
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(keys, id: \.self) { k in
-                Button { onTap(k) } label: {
-                    Text(k)
-                        .font(.system(size: 21, weight: .medium))
-                        .foregroundColor(Theme.fg)
-                        .frame(maxWidth: .infinity, minHeight: 36)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-            }
-        }
-    }
-}
-
 /// شريحة اختيار بسيطة.
 struct Chip: View {
     let title: String
@@ -186,5 +165,23 @@ struct Chip: View {
 
 /// عنوان قسم في الإعدادات، فوق الخلفية الغامقة.
 func SectionTitle(_ title: String) -> some View {
-    Text(title).foregroundColor(Color.white.opacity(0.85))
+    let icons: [String: String] = [
+        "المواد الدراسية": "book.fill", "المادة": "book.fill",
+        "الفصول": "person.3.fill", "الفصل": "person.3.fill",
+        "اليوم الدراسي": "clock.fill", "الفسحة": "cup.and.saucer.fill",
+        "أيام الدراسة": "calendar", "اليوم": "calendar",
+        "توقيت الحصص": "bell.fill", "الحصة": "bell.fill",
+        "اللون": "paintpalette.fill",
+    ]
+    return HStack(spacing: 7) {
+        if let icon = icons[title] {
+            Image(systemName: icon)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(Color(UIColor(hex: 0xF7A65A)))
+        }
+        Text(title)
+            .font(.subheadline.weight(.semibold))
+            .foregroundColor(Color.white.opacity(0.92))
+    }
+    .textCase(nil)
 }

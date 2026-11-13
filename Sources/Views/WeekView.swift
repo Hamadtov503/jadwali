@@ -4,11 +4,20 @@ import SwiftUI
 struct WeekView: View {
     @EnvironmentObject var store: Store
     var onTap: (Int, Int) -> Void
+    @State private var confirmClear = false
 
     private let labelWidth: CGFloat = 70
     private let spacing: CGFloat = 6
 
     var body: some View {
+        content
+            .alert("إفراغ الجدول؟", isPresented: $confirmClear) {
+                Button("نعم", role: .destructive) { withAnimation { store.clearAll() } }
+                Button("لا", role: .cancel) {}
+            }
+    }
+
+    private var content: some View {
         TimelineView(.periodic(from: Date(), by: 60)) { context in
             let today = Weekdays.weekday(of: context.date)
             let now = Weekdays.minutes(of: context.date)
@@ -54,8 +63,22 @@ struct WeekView: View {
                     .padding(12)
                     .card()
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 24)
                     .frame(maxWidth: .infinity)
+
+                    if !store.items.isEmpty && !store.isExample {
+                        Button { confirmClear = true } label: {
+                            Label("إفراغ الجدول", systemImage: "trash")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 22)
+                                .padding(.vertical, 11)
+                                .background(Capsule().fill(Color.white.opacity(0.14)))
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.top, 16)
+                    }
+
+                    Color.clear.frame(height: 24)
                 }
             }
         }
