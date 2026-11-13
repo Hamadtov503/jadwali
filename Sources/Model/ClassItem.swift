@@ -2,6 +2,7 @@ import Foundation
 
 enum SubjectColor: String, Codable, CaseIterable, Identifiable {
     case green, orange, blue, purple, pink, teal, red, yellow
+    case indigo, brown, mint, lime, navy, maroon, sky, gray
     var id: String { rawValue }
     var title: String {
         switch self {
@@ -13,6 +14,14 @@ enum SubjectColor: String, Codable, CaseIterable, Identifiable {
         case .teal: return "فيروزي"
         case .red: return "أحمر"
         case .yellow: return "ذهبي"
+        case .indigo: return "نيلي"
+        case .brown: return "بني"
+        case .mint: return "نعناعي"
+        case .lime: return "ليموني"
+        case .navy: return "كحلي"
+        case .maroon: return "عنابي"
+        case .sky: return "سماوي"
+        case .gray: return "رمادي"
         }
     }
 

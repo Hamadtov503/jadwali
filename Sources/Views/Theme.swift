@@ -49,6 +49,14 @@ extension SubjectColor {
         case .teal: return Color(Theme.dynamic(0x1F9AA8, 0x3BB9C7))
         case .red: return Color(Theme.dynamic(0xD9534F, 0xEB6E6A))
         case .yellow: return Color(Theme.dynamic(0xC9A227, 0xDDBA45))
+        case .indigo: return Color(UIColor(hex: 0x4B5BD6))
+        case .brown: return Color(UIColor(hex: 0x9A6B45))
+        case .mint: return Color(UIColor(hex: 0x3DBE9C))
+        case .lime: return Color(UIColor(hex: 0x8DB32B))
+        case .navy: return Color(UIColor(hex: 0x2B4A7D))
+        case .maroon: return Color(UIColor(hex: 0x8E2A47))
+        case .sky: return Color(UIColor(hex: 0x3AA7E0))
+        case .gray: return Color(UIColor(hex: 0x6F7C85))
         }
     }
 
@@ -62,6 +70,14 @@ extension SubjectColor {
         case .teal: return Color(Theme.dynamic(0xDDF2F4, 0x123538))
         case .red: return Color(Theme.dynamic(0xFBE3E2, 0x3D1A19))
         case .yellow: return Color(Theme.dynamic(0xF8F0D6, 0x362D12))
+        case .indigo: return Color(UIColor(hex: 0xE3E6FB))
+        case .brown: return Color(UIColor(hex: 0xF1E4D8))
+        case .mint: return Color(UIColor(hex: 0xDDF5EE))
+        case .lime: return Color(UIColor(hex: 0xEDF4D6))
+        case .navy: return Color(UIColor(hex: 0xDCE4F1))
+        case .maroon: return Color(UIColor(hex: 0xF4DFE5))
+        case .sky: return Color(UIColor(hex: 0xDDF0FB))
+        case .gray: return Color(UIColor(hex: 0xE5E9EC))
         }
     }
 
@@ -75,6 +91,14 @@ extension SubjectColor {
         case .teal: return Color(Theme.dynamic(0x136872, 0x8ADCE5))
         case .red: return Color(Theme.dynamic(0x9E2F2B, 0xF5A3A0))
         case .yellow: return Color(Theme.dynamic(0x7A6110, 0xEBD27A))
+        case .indigo: return Color(UIColor(hex: 0x2C3899))
+        case .brown: return Color(UIColor(hex: 0x6B4526))
+        case .mint: return Color(UIColor(hex: 0x1B7560))
+        case .lime: return Color(UIColor(hex: 0x55700F))
+        case .navy: return Color(UIColor(hex: 0x1C3359))
+        case .maroon: return Color(UIColor(hex: 0x6A1730))
+        case .sky: return Color(UIColor(hex: 0x16699A))
+        case .gray: return Color(UIColor(hex: 0x45515A))
         }
     }
 }

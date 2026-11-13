@@ -187,6 +187,13 @@ struct SettingsView: View {
                     }
                 }
 
+                Section {
+                    Text("جدولي — الإصدار \(Fmt.ar(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""))")
+                        .font(.footnote)
+                        .foregroundColor(Theme.muted)
+                        .frame(maxWidth: .infinity)
+                        .listRowBackground(Color.clear)
+                }
             }
             .listRowBackground(Theme.surface)
             }

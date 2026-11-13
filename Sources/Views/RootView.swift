@@ -47,16 +47,23 @@ struct RootView: View {
                         .padding(.bottom, 12)
                 }
 
-                ZStack {
-                    if mode == .day {
+                // الصفحتان موجودتان دائمًا، والتنقل مجرد انزلاق بينهما.
+                GeometryReader { geo in
+                    let w = geo.size.width
+                    ZStack {
                         DayView(selectedDay: $selectedDay)
-                            .transition(.move(edge: .leading).combined(with: .opacity))
-                    } else {
+                            .frame(width: w)
+                            .offset(x: mode == .day ? 0 : w)
+                            .opacity(mode == .day ? 1 : 0)
+                            .allowsHitTesting(mode == .day)
                         WeekView(onTap: { assign($0, $1) })
-                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                            .frame(width: w)
+                            .offset(x: mode == .week ? 0 : -w)
+                            .opacity(mode == .week ? 1 : 0)
+                            .allowsHitTesting(mode == .week)
                     }
+                    .animation(.interactiveSpring(response: 0.5, dampingFraction: 0.9, blendDuration: 0.2), value: modeRaw)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .clipped()
             }
 
@@ -109,7 +116,7 @@ struct RootView: View {
             HStack(spacing: 2) {
                 ForEach(ViewMode.allCases) { m in
                     Button {
-                        withAnimation(.spring(response: 0.45, dampingFraction: 0.88)) { modeRaw = m.rawValue }
+                        withAnimation(.interactiveSpring(response: 0.5, dampingFraction: 0.9, blendDuration: 0.2)) { modeRaw = m.rawValue }
                     } label: {
                         Text(m.title)
                             .font(.subheadline.weight(.semibold))
