@@ -74,7 +74,7 @@ struct AvatarView: View {
 
     var body: some View {
         ZStack {
-            Circle().fill(Theme.green)
+            Circle().fill(Theme.deepBrown)
             if let img = avatar.image {
                 Image(uiImage: img)
                     .resizable()
@@ -144,7 +144,6 @@ struct ProfileView: View {
                 }
             }
             .listRowBackground(Theme.surface)
-            .environment(\.colorScheme, .dark)
             }
             .appFormBackground()
             .navigationTitle("الملف الشخصي")

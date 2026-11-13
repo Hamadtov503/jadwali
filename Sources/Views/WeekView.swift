@@ -49,10 +49,10 @@ struct WeekView: View {
                     .background(alignment: .topLeading) {
                         if let idx = days.firstIndex(of: today) {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Theme.green.opacity(0.12))
+                                .fill(Theme.deepBrown.opacity(0.08))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .stroke(Theme.green, lineWidth: 2)
+                                        .stroke(Theme.deepBrown, lineWidth: 2)
                                 )
                                 .frame(width: side + 8)
                                 .frame(maxHeight: .infinity)
@@ -103,7 +103,7 @@ struct WeekView: View {
                 .padding(.vertical, 6)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(isToday ? Theme.green : Color.clear)
+                        .fill(isToday ? Theme.deepBrown : Color.clear)
                 )
             }
         }

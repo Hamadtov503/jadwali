@@ -15,19 +15,19 @@ enum Theme {
         UIColor { $0.userInterfaceStyle == .dark ? UIColor(hex: dark) : UIColor(hex: light) }
     }
 
-    /// الخلفية: بني فاتح.
-    static let uiBackground = UIColor(hex: 0xEADBC8)
+    /// الخلفية: كريمي.
+    static let uiBackground = UIColor(hex: 0xF3ECE0)
     static let bg = Color(uiBackground)
     /// النص فوق الخلفية الفاتحة.
-    static let uiOnBg = UIColor(hex: 0x3A281D)
+    static let uiOnBg = UIColor(hex: 0x2B1E16)
     static let onBg = Color(uiOnBg)
-    /// البطاقات: بني غامق.
-    static let uiSurface = UIColor(hex: 0x4A3326)
+    /// البطاقات: كريمي فاتح.
+    static let uiSurface = UIColor(hex: 0xFBF7EE)
     static let surface = Color(uiSurface)
-    static let surface2 = Color(UIColor(hex: 0x5F4535))
-    static let fg = Color(UIColor(hex: 0xF7EEE4))
-    static let muted = Color(UIColor(hex: 0xCDB8A3))
-    static let line = Color(UIColor(hex: 0x76594A))
+    static let surface2 = Color(UIColor(hex: 0xEBE1D1))
+    static let fg = Color(UIColor(hex: 0x2B1E16))
+    static let muted = Color(UIColor(hex: 0x7D6C5E))
+    static let line = Color(UIColor(hex: 0xE2D6C3))
 
     static let green = Color(dynamic(0x2E9E6B, 0x3DBB82))
     static let orange = Color(dynamic(0xEE8427, 0xF59A45))
@@ -167,11 +167,11 @@ struct Chip: View {
             .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(selected ? (color?.soft ?? Theme.green) : Theme.surface2.opacity(0.6))
+                    .fill(selected ? (color?.soft ?? Theme.deepBrown) : Theme.surface2.opacity(0.6))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(selected ? (color?.main ?? Theme.green) : Color.clear, lineWidth: 2)
+                    .stroke(selected ? (color?.main ?? Theme.deepBrown) : Color.clear, lineWidth: 2)
             )
             .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }

@@ -115,7 +115,7 @@ struct DayStrip: View {
                             .font(.caption.weight(d == today ? .semibold : .medium))
                             .lineLimit(1)
                             .minimumScaleFactor(0.6)
-                            .foregroundColor(selected ? Color.white.opacity(0.85) : (d == today ? Theme.orange : Theme.muted))
+                            .foregroundColor(selected ? Color.white.opacity(0.85) : (d == today ? SubjectColor.orange.ink : Theme.muted))
                         Text(Fmt.dayNumber(Weekdays.date(of: d)))
                             .font(.system(.title3, design: .rounded).weight(.semibold).monospacedDigit())
                             .foregroundColor(selected ? .white : Theme.fg)
@@ -136,7 +136,7 @@ struct DayStrip: View {
                                 .fill(Theme.surface)
                             if selected {
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Theme.blue)
+                                    .fill(Theme.deepBrown)
                                     .matchedGeometryEffect(id: "selectedDay", in: ns)
                             }
                         }
@@ -312,7 +312,7 @@ struct ClassRow: View {
                     .padding(.bottom, 12)
                 }
             }
-            .background(Theme.surface)
+            .background(state == .now ? item.color.soft : Theme.surface)
             .overlay(alignment: .leading) {
                 Rectangle().fill(item.color.main).frame(width: 4)
             }

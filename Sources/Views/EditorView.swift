@@ -106,7 +106,6 @@ struct EditorView: View {
                 }
             }
             .listRowBackground(Theme.surface)
-            .environment(\.colorScheme, .dark)
             }
             .appFormBackground()
             .navigationTitle(isNew ? "حصة جديدة" : "تعديل الحصة")

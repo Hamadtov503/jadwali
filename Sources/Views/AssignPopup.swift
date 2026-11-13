@@ -50,7 +50,7 @@ struct AssignPopup: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.green))
+                        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.deepBrown))
                     }
                     .buttonStyle(.plain)
                 } else {

@@ -37,7 +37,7 @@ struct SettingsView: View {
                                 .onSubmit { addSubject(); adding = nil }
                             Button("إضافة") { addSubject(); adding = nil }
                                 .font(.subheadline.weight(.semibold))
-                                .foregroundColor(Theme.green)
+                                .foregroundColor(Theme.deepBrown)
                                 .buttonStyle(.plain)
                                 .disabled(trimmed(newSubject).isEmpty)
                             cancelButton { newSubject = "" }
@@ -77,7 +77,7 @@ struct SettingsView: View {
                                 .onSubmit { addClass(); adding = nil }
                             Button("إضافة") { addClass(); adding = nil }
                                 .font(.subheadline.weight(.semibold))
-                                .foregroundColor(Theme.green)
+                                .foregroundColor(Theme.deepBrown)
                                 .buttonStyle(.plain)
                                 .disabled(trimmed(newClass).isEmpty)
                             cancelButton { newClass = "" }
@@ -149,12 +149,11 @@ struct SettingsView: View {
 
             }
             .listRowBackground(Theme.surface)
-            .environment(\.colorScheme, .dark)
             }
             .appFormBackground()
             .sheet(item: $editingClass) { ref in
                 ClassDetailView(schoolClass: classBinding(ref.id))
-                    .accentColor(Theme.orange)
+                    .accentColor(Theme.deepBrown)
             }
             .navigationTitle("الإعدادات")
             .navigationBarTitleDisplayMode(.inline)
@@ -324,7 +323,6 @@ struct ClassDetailView: View {
                     }
                 }
                 .listRowBackground(Theme.surface)
-                .environment(\.colorScheme, .dark)
             }
             .appFormBackground()
             .navigationTitle(schoolClass.name)

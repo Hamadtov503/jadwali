@@ -38,7 +38,7 @@ struct RootView: View {
                         SettingsView(settings: store.settings)
                             .environmentObject(store)
                             .environment(\.locale, Fmt.locale)
-                .accentColor(Theme.orange)
+                .accentColor(Theme.deepBrown)
                     }
 
                 if store.isExample {
@@ -73,7 +73,7 @@ struct RootView: View {
             EditorView(target: target)
                 .environmentObject(store)
                 .environment(\.locale, Fmt.locale)
-                .accentColor(Theme.orange)
+                .accentColor(Theme.deepBrown)
         }
     }
 
@@ -100,7 +100,7 @@ struct RootView: View {
                         .sheet(isPresented: $showProfile) {
                             ProfileView()
                                 .environment(\.locale, Fmt.locale)
-                .accentColor(Theme.orange)
+                .accentColor(Theme.deepBrown)
                         }
                     circleButton("gearshape", label: "الإعدادات") { showSettings = true }
                 }
@@ -113,15 +113,15 @@ struct RootView: View {
                     } label: {
                         Text(m.title)
                             .font(.subheadline.weight(.semibold))
-                            .foregroundColor(mode == m ? Theme.fg : Theme.muted)
+                            .foregroundColor(mode == m ? .white : Theme.muted)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 9)
                             .background(
                                 ZStack {
                                     if mode == m {
                                         Capsule()
-                                            .fill(Theme.surface)
-                                            .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 2)
+                                            .fill(Theme.deepBrown)
+                                            .shadow(color: Color.black.opacity(0.12), radius: 6, x: 0, y: 2)
                                             .matchedGeometryEffect(id: "mode", in: modeNS)
                                     }
                                 }
