@@ -143,7 +143,7 @@ struct RootView: View {
         let h = Weekdays.calendar.component(.hour, from: date)
         let base = (4..<12).contains(h) ? "صباح الخير" : "مساء الخير"
         let name = userName.trimmingCharacters(in: .whitespacesAndNewlines)
-        return name.isEmpty ? base : "\(base) أ. \(name)"
+        return name.isEmpty ? "\(base) 👋" : "\(base) 👋 أ. \(name)"
     }
 
     private func circleButton(_ icon: String, label: String, action: @escaping () -> Void) -> some View {

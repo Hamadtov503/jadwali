@@ -8,6 +8,10 @@ struct SettingsView: View {
     @State private var confirmClear = false
     @State private var newSubject = ""
     @State private var newClass = ""
+    @State private var adding: AddKind?
+    @FocusState private var focus: AddKind?
+
+    enum AddKind: Hashable { case subject, klass }
 
     init(settings: SchoolSettings) {
         _s = State(initialValue: settings)
@@ -16,26 +20,28 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("المواد الدراسية")) {
+                Section(header: Text("المواد الدراسية"), footer: plusButton(.subject)) {
                     ForEach(s.subjects, id: \.self) { name in
                         label(name, "book.fill", Theme.blue)
                     }
                     .onDelete { s.subjects.remove(atOffsets: $0) }
-                    HStack(spacing: 12) {
-                        SettingIcon(name: "text.book.closed.fill", color: Theme.muted)
-                        TextField("مادة جديدة", text: $newSubject)
-                            .onSubmit(addSubject)
-                        Button(action: addSubject) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 22))
+                    if adding == .subject {
+                        HStack(spacing: 12) {
+                            SettingIcon(name: "book.fill", color: Theme.green)
+                            TextField("مادة جديدة", text: $newSubject)
+                                .focused($focus, equals: .subject)
+                                .submitLabel(.done)
+                                .onSubmit { addSubject(); adding = nil }
+                            Button("إضافة") { addSubject(); adding = nil }
+                                .font(.subheadline.weight(.semibold))
                                 .foregroundColor(Theme.green)
+                                .buttonStyle(.plain)
+                                .disabled(trimmed(newSubject).isEmpty)
                         }
-                        .buttonStyle(.plain)
-                        .disabled(trimmed(newSubject).isEmpty)
                     }
                 }
 
-                Section(header: Text("الفصول")) {
+                Section(header: Text("الفصول"), footer: plusButton(.klass)) {
                     ForEach($s.classes) { $c in
                         NavigationLink {
                             ClassDetailView(schoolClass: $c)
@@ -44,17 +50,19 @@ struct SettingsView: View {
                         }
                     }
                     .onDelete { s.classes.remove(atOffsets: $0) }
-                    HStack(spacing: 12) {
-                        SettingIcon(name: "person.3", color: Theme.muted)
-                        TextField("فصل جديد", text: $newClass)
-                            .onSubmit(addClass)
-                        Button(action: addClass) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 22))
+                    if adding == .klass {
+                        HStack(spacing: 12) {
+                            SettingIcon(name: "person.3.fill", color: Theme.green)
+                            TextField("فصل جديد", text: $newClass)
+                                .focused($focus, equals: .klass)
+                                .submitLabel(.done)
+                                .onSubmit { addClass(); adding = nil }
+                            Button("إضافة") { addClass(); adding = nil }
+                                .font(.subheadline.weight(.semibold))
                                 .foregroundColor(Theme.green)
+                                .buttonStyle(.plain)
+                                .disabled(trimmed(newClass).isEmpty)
                         }
-                        .buttonStyle(.plain)
-                        .disabled(trimmed(newClass).isEmpty)
                     }
                 }
 
@@ -150,6 +158,25 @@ struct SettingsView: View {
     }
 
     // MARK: - Helpers
+
+    private func plusButton(_ kind: AddKind) -> some View {
+        HStack {
+            Spacer()
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) { adding = kind }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { focus = kind }
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundColor(Theme.green)
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(kind == .subject ? "إضافة مادة" : "إضافة فصل")
+            Spacer()
+        }
+    }
 
     private func trimmed(_ t: String) -> String {
         t.trimmingCharacters(in: .whitespacesAndNewlines)

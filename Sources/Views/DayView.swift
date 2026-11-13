@@ -14,6 +14,9 @@ struct DayView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     DayStrip(selectedDay: $selectedDay, today: today)
+                    if isToday {
+                        AlertBanners(items: items, now: now)
+                    }
                     if items.isEmpty && !store.isSchoolDay(selectedDay) {
                         VStack(spacing: 12) {
                             Image(systemName: "sun.max.fill")
@@ -69,11 +72,11 @@ struct DayStrip: View {
     let today: Int
 
     private var days: [Int] {
-        Array(Set(store.weekDays).union([today, selectedDay])).sorted()
+        Array(0..<7)
     }
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 5) {
             ForEach(days, id: \.self) { d in
                 let selected = d == selectedDay
                 let colors = store.classes(on: d).prefix(4).map(\.color)
@@ -84,7 +87,7 @@ struct DayStrip: View {
                         Text(Weekdays.names[d])
                             .font(.caption.weight(d == today ? .semibold : .medium))
                             .lineLimit(1)
-                            .minimumScaleFactor(0.75)
+                            .minimumScaleFactor(0.6)
                             .foregroundColor(selected ? Color.white.opacity(0.85) : (d == today ? SubjectColor.orange.ink : Theme.muted))
                         Text(Fmt.dayNumber(Weekdays.date(of: d)))
                             .font(.system(.title3, design: .rounded).weight(.semibold).monospacedDigit())
@@ -287,5 +290,61 @@ struct ClassRow: View {
             .shadow(color: Color.black.opacity(state == .past ? 0 : 0.05), radius: 10, x: 0, y: 4)
         }
         .opacity(state == .past ? 0.55 : 1)
+    }
+}
+
+// MARK: - Banners
+
+/// تنبيهات قبل نهاية الحصة الحالية أو بداية الحصة القادمة بخمس دقائق.
+struct AlertBanners: View {
+    let items: [ClassItem]
+    let now: Int
+
+    var body: some View {
+        let current = items.first { $0.start <= now && now < $0.end }
+        let next = items.first { $0.start > now }
+        let ending = current.flatMap { c in c.end - now <= 5 ? c : nil }
+        let starting = next.flatMap { n in n.start - now <= 5 ? n : nil }
+
+        if ending != nil || starting != nil {
+            VStack(spacing: 8) {
+                if let c = ending {
+                    banner(icon: "hourglass.bottomhalf.filled",
+                           text: "تنتهي حصتك مع \(c.title) بعد \(Self.minutes(c.end - now))",
+                           color: c.color)
+                }
+                if let n = starting {
+                    banner(icon: "bell.fill",
+                           text: "تبدأ حصتك مع \(n.title) بعد \(Self.minutes(n.start - now))",
+                           color: n.color)
+                }
+            }
+        }
+    }
+
+    private func banner(icon: String, text: String, color: SubjectColor) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .semibold))
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(Color.white.opacity(0.22)))
+            Text(text)
+                .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .foregroundColor(.white)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .card(color.main)
+    }
+
+    static func minutes(_ m: Int) -> String {
+        switch m {
+        case ...0: return "أقل من دقيقة"
+        case 1: return "دقيقة"
+        case 2: return "دقيقتين"
+        case 3...10: return "\(Fmt.n(m)) دقائق"
+        default: return "\(Fmt.n(m)) دقيقة"
+        }
     }
 }
