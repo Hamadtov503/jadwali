@@ -20,6 +20,7 @@ struct RootView: View {
     @State private var showSettings = false
     @State private var assigning: AssignTarget?
     @State private var showProfile = false
+    @State private var confirmClear = false
     @AppStorage("userName") private var userName = ""
     @Namespace private var modeNS
 
@@ -47,13 +48,27 @@ struct RootView: View {
                             .id("day-page")
                             .transition(.move(edge: .leading))
                     } else {
-                        WeekView(onTap: { assign($0, $1) })
+                        WeekView(onTap: { assign($0, $1) },
+                                 onClear: { withAnimation(.easeOut(duration: 0.18)) { confirmClear = true } })
                             .id("week-page")
                             .transition(.move(edge: .trailing))
                     }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .clipped()
+            }
+
+            if confirmClear {
+                ConfirmPopup(title: "إفراغ الجدول؟",
+                             onYes: {
+                                 var t = Transaction()
+                                 t.disablesAnimations = true
+                                 withTransaction(t) { store.clearAll() }
+                                 withAnimation(.easeOut(duration: 0.15)) { confirmClear = false }
+                             },
+                             onNo: { withAnimation(.easeOut(duration: 0.15)) { confirmClear = false } })
+                    .transition(.opacity)
+                    .zIndex(2)
             }
 
             if let target = assigning {

@@ -159,3 +159,56 @@ struct AssignPopup: View {
         withTransaction(t, change)
     }
 }
+
+/// نافذة تأكيد بتنسيق التطبيق: «نعم» يمين و«لا» يسار.
+struct ConfirmPopup: View {
+    let title: String
+    var onYes: () -> Void
+    var onNo: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.35)
+                .ignoresSafeArea()
+                .onTapGesture(perform: onNo)
+
+            VStack(spacing: 18) {
+                Image(systemName: "trash.fill")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 52, height: 52)
+                    .background(Circle().fill(Color.red))
+                Text(title)
+                    .font(.system(.headline, design: .rounded))
+                    .foregroundColor(Theme.fg)
+                HStack(spacing: 10) {
+                    Button(action: onYes) {
+                        Text("نعم")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.red))
+                    }
+                    .buttonStyle(.plain)
+                    Button(action: onNo) {
+                        Text("لا")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundColor(Theme.fg)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                            .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Theme.surface2))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(20)
+            .background(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(Theme.surface)
+                    .shadow(color: Color.black.opacity(0.18), radius: 24, x: 0, y: 10)
+            )
+            .padding(.horizontal, 44)
+        }
+    }
+}

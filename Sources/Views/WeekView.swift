@@ -4,17 +4,13 @@ import SwiftUI
 struct WeekView: View {
     @EnvironmentObject var store: Store
     var onTap: (Int, Int) -> Void
-    @State private var confirmClear = false
+    var onClear: () -> Void
 
     private let labelWidth: CGFloat = 70
     private let spacing: CGFloat = 6
 
     var body: some View {
         content
-            .alert("إفراغ الجدول؟", isPresented: $confirmClear) {
-                Button("نعم", role: .destructive) { withAnimation { store.clearAll() } }
-                Button("لا") {}
-            }
     }
 
     private var content: some View {
@@ -66,7 +62,7 @@ struct WeekView: View {
                     .frame(maxWidth: .infinity)
 
                     if !store.items.isEmpty && !store.isExample {
-                        Button { confirmClear = true } label: {
+                        Button(action: onClear) {
                             Label("إفراغ الجدول", systemImage: "trash")
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundColor(.red)
