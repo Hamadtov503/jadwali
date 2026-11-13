@@ -15,18 +15,22 @@ enum Theme {
         UIColor { $0.userInterfaceStyle == .dark ? UIColor(hex: dark) : UIColor(hex: light) }
     }
 
-    static let uiBackground = dynamic(0xE6F4EC, 0x0E1A15)
+    static let uiBackground = UIColor(hex: 0x165C3E)
     static let bg = Color(uiBackground)
-    static let surface = Color(dynamic(0xFFFFFF, 0x16241E))
-    static let surface2 = Color(dynamic(0xD5EBDE, 0x1E3029))
-    static let fg = Color(dynamic(0x1B2522, 0xE6EEEA))
-    static let muted = Color(dynamic(0x5E7068, 0x93A39D))
-    static let line = Color(dynamic(0xCFE3D7, 0x2A3B34))
+    /// النص فوق الخلفية الخضراء الغامقة.
+    static let onBg = Color.white
+    static let uiSurface = UIColor(hex: 0xE4F5EB)
+    static let surface = Color(uiSurface)
+    static let surface2 = Color(UIColor(hex: 0xC8E8D4))
+    static let fg = Color(UIColor(hex: 0x1B2522))
+    static let muted = Color(UIColor(hex: 0x4F665B))
+    static let line = Color(UIColor(hex: 0xB5D9C3))
 
     static let green = Color(dynamic(0x2E9E6B, 0x3DBB82))
     static let orange = Color(dynamic(0xEE8427, 0xF59A45))
     static let blue = Color(dynamic(0x2F78D4, 0x4C8FE6))
     static let deepGreen = Color(UIColor(hex: 0x165C3E))
+    static let lightGreen = Color(UIColor(hex: 0xBFE8CF))
 
     static let radius: CGFloat = 16
 }
@@ -157,4 +161,9 @@ struct Chip: View {
         .buttonStyle(.plain)
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
+}
+
+/// عنوان قسم في الإعدادات، فوق الخلفية الغامقة.
+func SectionTitle(_ title: String) -> some View {
+    Text(title).foregroundColor(Color.white.opacity(0.85))
 }

@@ -20,7 +20,8 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("المواد الدراسية"), footer: plusButton(.subject)) {
+ Group {
+                Section(header: SectionTitle("المواد الدراسية"), footer: plusButton(.subject)) {
                     ForEach(s.subjects, id: \.self) { name in
                         label(name, "book.fill", Theme.blue)
                     }
@@ -41,7 +42,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section(header: Text("الفصول"), footer: plusButton(.klass)) {
+                Section(header: SectionTitle("الفصول"), footer: plusButton(.klass)) {
                     ForEach($s.classes) { $c in
                         NavigationLink {
                             ClassDetailView(schoolClass: $c)
@@ -66,7 +67,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section(header: Text("اليوم الدراسي")) {
+                Section(header: SectionTitle("اليوم الدراسي")) {
                     DatePicker(selection: dayStartBinding, displayedComponents: .hourAndMinute) {
                         label("بداية الدوام", "sunrise.fill", Theme.orange)
                     }
@@ -83,7 +84,7 @@ struct SettingsView: View {
                 }
 
                 if s.periodsPerDay > 1 {
-                    Section(header: Text("الفسحة")) {
+                    Section(header: SectionTitle("الفسحة")) {
                         Toggle(isOn: $s.hasBreak) {
                             label("فسحة", "cup.and.saucer.fill", Theme.orange)
                         }
@@ -98,7 +99,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section(header: Text("أيام الدراسة")) {
+                Section(header: SectionTitle("أيام الدراسة")) {
                     ForEach(0..<7, id: \.self) { d in
                         Toggle(isOn: dayBinding(d)) {
                             label(Weekdays.names[d], s.schoolDays.contains(d) ? "calendar" : "sun.max.fill",
@@ -107,7 +108,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section(header: Text("توقيت الحصص")) {
+                Section(header: SectionTitle("توقيت الحصص")) {
                     let slots = s.periods()
                     ForEach(Array(slots.enumerated()), id: \.offset) { i, slot in
                         row("الحصة \(Fmt.n(i + 1))", Fmt.range(slot.start, slot.end), "bell.fill", Theme.blue)
@@ -129,6 +130,8 @@ struct SettingsView: View {
                         }
                     }
                 }
+            }
+            .listRowBackground(Theme.surface)
             }
             .appFormBackground()
             .navigationTitle("الإعدادات")
@@ -168,7 +171,9 @@ struct SettingsView: View {
             } label: {
                 Image(systemName: "plus")
                     .font(.system(size: 22, weight: .semibold))
-                    .foregroundColor(Theme.green)
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(Circle().fill(Color.white.opacity(0.15)))
                     .frame(width: 44, height: 44)
                     .contentShape(Rectangle())
             }
@@ -262,15 +267,18 @@ struct ClassDetailView: View {
 
     var body: some View {
         Form {
+ Group {
             Section {
                 HStack(spacing: 12) {
                     SettingIcon(name: "person.3.fill", color: schoolClass.color.main)
                     TextField("اسم الفصل", text: $schoolClass.name)
                 }
             }
-            Section(header: Text("اللون")) {
+            Section(header: SectionTitle("اللون")) {
                 ColorGrid(selection: $schoolClass.color)
             }
+        }
+        .listRowBackground(Theme.surface)
         }
         .appFormBackground()
         .navigationTitle(schoolClass.name)

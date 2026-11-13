@@ -38,6 +38,7 @@ struct RootView: View {
                             .environmentObject(store)
                             .environment(\.layoutDirection, .rightToLeft)
                             .environment(\.locale, Fmt.locale)
+                .accentColor(Theme.orange)
                     }
 
                 if store.isExample {
@@ -67,6 +68,7 @@ struct RootView: View {
                 .environmentObject(store)
                 .environment(\.layoutDirection, .rightToLeft)
                 .environment(\.locale, Fmt.locale)
+                .accentColor(Theme.orange)
         }
     }
 
@@ -78,17 +80,23 @@ struct RootView: View {
                 TimelineView(.periodic(from: Date(), by: 60)) { context in
                     Text(greeting(at: context.date))
                         .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundColor(Theme.fg)
+                        .foregroundColor(Theme.onBg)
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                 }
                 Spacer()
                 HStack(spacing: 10) {
-                    circleButton("person.crop.circle", label: "الملف الشخصي") { showProfile = true }
+                    Button { showProfile = true } label: {
+                        AvatarView(name: userName, size: 42)
+                            .overlay(Circle().stroke(Color.white.opacity(0.6), lineWidth: 1.5))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("الملف الشخصي")
                         .sheet(isPresented: $showProfile) {
                             ProfileView()
                                 .environment(\.layoutDirection, .rightToLeft)
                                 .environment(\.locale, Fmt.locale)
+                .accentColor(Theme.orange)
                         }
                     circleButton("gearshape", label: "الإعدادات") { showSettings = true }
                 }

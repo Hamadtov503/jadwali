@@ -7,6 +7,9 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         let bar = UINavigationBarAppearance()
         bar.configureWithTransparentBackground()
         bar.backgroundColor = Theme.uiBackground
+        bar.titleTextAttributes = [.foregroundColor: UIColor.white]
+        bar.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+        UINavigationBar.appearance().tintColor = UIColor(hex: 0xF7A65A)
         UINavigationBar.appearance().standardAppearance = bar
         UINavigationBar.appearance().scrollEdgeAppearance = bar
         UINavigationBar.appearance().compactAppearance = bar
@@ -28,7 +31,7 @@ struct JadwaliApp: App {
                 .environmentObject(store)
                 .environment(\.layoutDirection, .rightToLeft)
                 .environment(\.locale, Fmt.locale)
-                .accentColor(Theme.blue)
+                .accentColor(Theme.orange)
                 .preferredColorScheme(.light)
         }
     }

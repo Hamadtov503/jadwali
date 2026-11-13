@@ -18,7 +18,8 @@ struct EditorView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("المادة")) {
+ Group {
+                Section(header: SectionTitle("المادة")) {
                     if !store.settings.subjects.isEmpty {
                         LazyVGrid(columns: grid(2), spacing: 8) {
                             ForEach(store.settings.subjects, id: \.self) { name in
@@ -32,7 +33,7 @@ struct EditorView: View {
                 }
 
                 if !store.settings.classes.isEmpty {
-                    Section(header: Text("الفصل")) {
+                    Section(header: SectionTitle("الفصل")) {
                         LazyVGrid(columns: grid(3), spacing: 8) {
                             ForEach(store.settings.classes) { c in
                                 Chip(title: c.name, color: c.color, selected: item.classID == c.id) {
@@ -51,7 +52,7 @@ struct EditorView: View {
                     }
                 }
 
-                Section(header: Text("اليوم")) {
+                Section(header: SectionTitle("اليوم")) {
                     LazyVGrid(columns: grid(4), spacing: 8) {
                         ForEach(dayChoices, id: \.self) { d in
                             Chip(title: Weekdays.names[d], selected: item.weekday == d) {
@@ -63,7 +64,7 @@ struct EditorView: View {
                     .padding(.vertical, 6)
                 }
 
-                Section(header: Text("الحصة")) {
+                Section(header: SectionTitle("الحصة")) {
                     LazyVGrid(columns: grid(2), spacing: 8) {
                         ForEach(Array(slots.enumerated()), id: \.offset) { i, slot in
                             Chip(title: "\(Fmt.n(i + 1)) · \(Fmt.range(slot.start, slot.end))",
@@ -83,7 +84,7 @@ struct EditorView: View {
                 }
 
                 if item.classID == nil {
-                    Section(header: Text("اللون")) {
+                    Section(header: SectionTitle("اللون")) {
                         ColorGrid(selection: $item.color)
                     }
                 }
@@ -101,6 +102,8 @@ struct EditorView: View {
                         }
                     }
                 }
+            }
+            .listRowBackground(Theme.surface)
             }
             .appFormBackground()
             .navigationTitle(isNew ? "حصة جديدة" : "تعديل الحصة")

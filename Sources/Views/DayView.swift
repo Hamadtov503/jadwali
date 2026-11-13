@@ -21,14 +21,14 @@ struct DayView: View {
                         VStack(spacing: 12) {
                             Image(systemName: "sun.max.fill")
                                 .font(.system(size: 40))
-                                .foregroundColor(Color(UIColor(hex: 0xFFC56B)))
+                                .foregroundColor(Theme.orange)
                             Text("إجازة نهاية الأسبوع")
                                 .font(.system(.title3, design: .rounded).weight(.semibold))
-                                .foregroundColor(.white)
+                                .foregroundColor(Theme.deepGreen)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 40)
-                        .card(Theme.deepGreen)
+                        .card(Theme.lightGreen)
                     } else {
                     SummaryCard(items: items, isToday: isToday, now: now, day: selectedDay)
 
