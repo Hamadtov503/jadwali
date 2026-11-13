@@ -89,14 +89,16 @@ struct WeekView: View {
             Color.clear.frame(width: labelWidth, height: 1)
             ForEach(days, id: \.self) { d in
                 let isToday = d == today
-                VStack(spacing: 1) {
+                VStack(spacing: 3) {
                     Text(Weekdays.names[d])
                         .font(.caption.weight(.semibold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                     Text(Fmt.dayNumber(Weekdays.date(of: d)))
-                        .font(.caption2.monospacedDigit())
-                        .opacity(0.8)
+                        .font(.caption2.weight(.bold).monospacedDigit())
+                        .foregroundColor(.white)
+                        .frame(width: 22, height: 22)
+                        .background(Circle().fill(Color(UIColor(hex: 0x7B1E3A))))
                 }
                 .foregroundColor(isToday ? .white : Theme.fg)
                 .frame(width: side)
@@ -115,8 +117,8 @@ struct WeekView: View {
                 .font(.caption.weight(.semibold))
                 .foregroundColor(Theme.fg)
             Text(Fmt.range(slot.start, slot.end))
-                .font(.caption2.monospacedDigit())
-                .foregroundColor(Theme.muted)
+                .font(.caption2.weight(.medium).monospacedDigit())
+                .foregroundColor(Color(UIColor(hex: 0x1D6B48)))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
