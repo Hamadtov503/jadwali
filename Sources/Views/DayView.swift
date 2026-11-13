@@ -6,27 +6,29 @@ struct DayView: View {
     var onEdit: (ClassItem) -> Void
     var onAdd: (Int, Int?) -> Void
 
-    /// عنصر في الخط الزمني: حصة مسجّلة أو حصة فارغة من إعدادات اليوم الدراسي.
+    /// عنصر في الجدول: حصة مسجّلة، أو حصة فارغة، أو الفسحة.
     enum Entry: Identifiable {
         case lesson(ClassItem)
         case free(period: Int, start: Int, end: Int)
+        case rest(start: Int, end: Int)
 
         var id: String {
             switch self {
             case .lesson(let c): return c.id.uuidString
             case .free(let p, _, _): return "free-\(p)"
+            case .rest: return "rest"
             }
         }
         var start: Int {
             switch self {
             case .lesson(let c): return c.start
-            case .free(_, let s, _): return s
+            case .free(_, let s, _), .rest(let s, _): return s
             }
         }
         var end: Int {
             switch self {
             case .lesson(let c): return c.end
-            case .free(_, _, let e): return e
+            case .free(_, _, let e), .rest(_, let e): return e
             }
         }
     }
@@ -37,6 +39,10 @@ struct DayView: View {
             for (i, slot) in store.settings.periods().enumerated() {
                 let busy = items.contains { $0.start < slot.end && slot.start < $0.end }
                 if !busy { out.append(.free(period: i + 1, start: slot.start, end: slot.end)) }
+            }
+            if let b = store.settings.breakSlot(),
+               !items.contains(where: { $0.start < b.end && b.start < $0.end }) {
+                out.append(.rest(start: b.start, end: b.end))
             }
         }
         return out.sorted { $0.start < $1.start }
@@ -58,22 +64,22 @@ struct DayView: View {
                     if list.isEmpty {
                         emptyState(isToday: isToday)
                     } else {
-                        VStack(alignment: .leading, spacing: 10) {
+                        VStack(spacing: 8) {
                             ForEach(Array(list.enumerated()), id: \.element.id) { index, entry in
                                 if index > 0 {
                                     let gap = entry.start - list[index - 1].end
                                     if gap >= 10 { GapRow(minutes: gap) }
                                 }
+                                let state = rowState(start: entry.start, end: entry.end, isToday: isToday, now: now)
                                 switch entry {
                                 case .lesson(let item):
-                                    ClassRow(item: item,
-                                             state: rowState(start: item.start, end: item.end, isToday: isToday, now: now),
-                                             now: now,
-                                             onTap: { onEdit(item) })
+                                    ClassRow(item: item, state: state, now: now, onTap: { onEdit(item) })
                                 case .free(let period, let start, let end):
                                     FreePeriodRow(period: period, start: start, end: end,
-                                                  isPast: rowState(start: start, end: end, isToday: isToday, now: now) == .past,
+                                                  isPast: state == .past,
                                                   onTap: { onAdd(selectedDay, period) })
+                                case .rest(let start, let end):
+                                    BreakRow(start: start, end: end, state: state)
                                 }
                             }
                         }
@@ -199,7 +205,7 @@ struct SummaryCard: View {
     var body: some View {
         let l = lines
         let total = items.reduce(0) { $0 + $1.duration }
-        VStack(spacing: 10) {
+        HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(l.label)
                     .font(.caption)
@@ -207,6 +213,8 @@ struct SummaryCard: View {
                 Text(l.title)
                     .font(.system(.title3, design: .rounded).weight(.semibold))
                     .foregroundColor(Theme.fg)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 if !l.detail.isEmpty {
                     Text(l.detail)
                         .font(.subheadline)
@@ -214,46 +222,98 @@ struct SummaryCard: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .card()
 
-            HStack(spacing: 10) {
-                stat(value: "\(items.count)", label: "حصص")
-                stat(value: total > 0 ? Fmt.duration(total) : "—", label: "إجمالي الوقت")
+            Rectangle().fill(Theme.line).frame(width: 1, height: 44)
+
+            VStack(spacing: 2) {
+                Text("\(items.count)")
+                    .font(.system(.title2, design: .rounded).weight(.bold).monospacedDigit())
+                    .foregroundColor(Theme.fg)
+                Text(items.count == 1 ? "حصة" : "حصص")
+                    .font(.caption)
+                    .foregroundColor(Theme.muted)
+                if total > 0 {
+                    Text(Fmt.duration(total))
+                        .font(.caption2)
+                        .foregroundColor(Theme.muted)
+                }
             }
+            .frame(width: 64)
         }
-    }
-
-    private func stat(value: String, label: String) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(value)
-                .font(.system(.title3, design: .rounded).weight(.semibold).monospacedDigit())
-                .foregroundColor(Theme.fg)
-            Text(label)
-                .font(.caption)
-                .foregroundColor(Theme.muted)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(16)
         .card()
     }
 }
 
 // MARK: - Rows
 
+/// شكل موحّد لكل صف: رقم الحصة، ثم المحتوى، ثم الوقت.
+struct RowLayout<Badge: View, Content: View>: View {
+    let start: Int
+    let end: Int
+    var timeColor: Color = Theme.muted
+    var height: CGFloat = 64
+    @ViewBuilder var badge: Badge
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        HStack(spacing: 12) {
+            badge
+                .frame(width: 36, height: 36)
+            content
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Text(Fmt.range(start, end))
+                .font(.footnote.weight(.medium).monospacedDigit())
+                .foregroundColor(timeColor)
+                .lineLimit(1)
+                .fixedSize()
+        }
+        .padding(.horizontal, 14)
+        .frame(minHeight: height)
+    }
+}
+
 struct GapRow: View {
     let minutes: Int
     var body: some View {
         HStack(spacing: 8) {
-            Rectangle()
-                .fill(Theme.line)
-                .frame(width: 18, height: 2)
-            Text("استراحة \(Fmt.duration(minutes))")
-                .font(.caption)
+            Rectangle().fill(Theme.line).frame(height: 1)
+            Text(Fmt.duration(minutes))
+                .font(.caption2)
                 .foregroundColor(Theme.muted)
+                .fixedSize()
+            Rectangle().fill(Theme.line).frame(height: 1)
         }
-        .padding(.leading, 8)
+        .padding(.horizontal, 24)
+    }
+}
+
+struct BreakRow: View {
+    let start: Int
+    let end: Int
+    let state: ClassRow.RowState
+
+    var body: some View {
+        RowLayout(start: start, end: end, timeColor: SubjectColor.orange.ink, height: 50) {
+            Image(systemName: "cup.and.saucer.fill")
+                .font(.system(size: 15))
+                .foregroundColor(SubjectColor.orange.ink)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.surface.opacity(0.7)))
+                .padding(.vertical, 2)
+        } content: {
+            HStack(spacing: 8) {
+                Text("الفسحة")
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold))
+                    .foregroundColor(SubjectColor.orange.ink)
+                if state == .now { NowTag() }
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
+                .fill(SubjectColor.orange.soft)
+        )
+        .opacity(state == .past ? 0.55 : 1)
     }
 }
 
@@ -266,30 +326,44 @@ struct FreePeriodRow: View {
 
     var body: some View {
         Button(action: onTap) {
-                HStack {
-                    Text("الحصة \(period)")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundColor(Theme.muted)
-                    Text(Fmt.range(start, end))
-                        .font(.subheadline.monospacedDigit())
-                        .foregroundColor(Theme.muted)
-                    Spacer()
-                    Image(systemName: "plus.circle")
-                        .font(.system(size: 18))
-                        .foregroundColor(Theme.muted)
+            RowLayout(start: start, end: end) {
+                Text("\(period)")
+                    .font(.system(.subheadline, design: .rounded).weight(.semibold).monospacedDigit())
+                    .foregroundColor(Theme.muted)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .stroke(Theme.line, style: StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+                    )
+            } content: {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 13, weight: .semibold))
+                    Text("حصة فارغة")
+                        .font(.subheadline)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .frame(maxWidth: .infinity)
-                .overlay(
-                    RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
-                        .stroke(Theme.line, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
-                )
-                .contentShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
+                .foregroundColor(Theme.muted)
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("إضافة حصة في الحصة \(period)")
-            .opacity(isPast ? 0.5 : 1)
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.radius, style: .continuous)
+                    .stroke(Theme.line, style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+            )
+            .contentShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("إضافة حصة في الحصة \(period)")
+        .opacity(isPast ? 0.5 : 1)
+    }
+}
+
+struct NowTag: View {
+    var body: some View {
+        Text("الآن")
+            .font(.caption2.weight(.bold))
+            .foregroundColor(.white)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 2)
+            .background(Capsule().fill(Theme.orange))
     }
 }
 
@@ -302,72 +376,64 @@ struct ClassRow: View {
     let onTap: () -> Void
 
     var body: some View {
-        Button(action: onTap) { card }
-            .buttonStyle(.plain)
-            .opacity(state == .past ? 0.55 : 1)
-    }
-
-    private var card: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(item.subject)
-                    .font(.system(.headline, design: .rounded))
-                    .foregroundColor(Theme.fg)
-                Spacer(minLength: 4)
-                if state == .now {
-                    Text("الآن")
-                        .font(.caption.weight(.semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 2)
-                        .background(Capsule().fill(Theme.orange))
-                } else {
-                    Text(Fmt.duration(item.duration))
-                        .font(.caption.weight(.semibold))
-                        .foregroundColor(item.color.ink)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 2)
-                        .background(Capsule().fill(item.color.soft))
-                }
-            }
-            HStack(spacing: 6) {
-                if let p = item.period {
-                    Text("الحصة \(p)")
-                        .font(.footnote.weight(.medium))
-                        .foregroundColor(item.color.ink)
-                }
-                Text(Fmt.range(item.start, item.end))
-                    .font(.footnote.weight(.semibold).monospacedDigit())
-                    .foregroundColor(Theme.fg)
-            }
-            if !item.meta.isEmpty {
-                Text(item.meta)
-                    .font(.footnote)
-                    .foregroundColor(Theme.muted)
-            }
-            if state == .now {
-                let progress = CGFloat(now - item.start) / CGFloat(max(item.duration, 1))
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(Theme.surface2)
-                        Capsule().fill(item.color.main)
-                            .frame(width: geo.size.width * min(max(progress, 0), 1))
+        Button(action: onTap) {
+            VStack(spacing: 0) {
+                RowLayout(start: item.start, end: item.end, timeColor: state == .now ? item.color.ink : Theme.muted) {
+                    Group {
+                        if let p = item.period {
+                            Text("\(p)")
+                                .font(.system(.subheadline, design: .rounded).weight(.bold).monospacedDigit())
+                        } else {
+                            Image(systemName: "clock")
+                                .font(.system(size: 14, weight: .semibold))
+                        }
+                    }
+                    .foregroundColor(state == .now ? .white : item.color.ink)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(state == .now ? item.color.main : item.color.soft)
+                    )
+                } content: {
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 6) {
+                            Text(item.subject)
+                                .font(.system(.headline, design: .rounded))
+                                .foregroundColor(Theme.fg)
+                                .lineLimit(1)
+                            if state == .now { NowTag() }
+                        }
+                        if !item.meta.isEmpty {
+                            Text(item.meta)
+                                .font(.caption)
+                                .foregroundColor(Theme.muted)
+                                .lineLimit(1)
+                        }
                     }
                 }
-                .frame(height: 4)
-                .padding(.top, 6)
+                if state == .now {
+                    let progress = CGFloat(now - item.start) / CGFloat(max(item.duration, 1))
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            Capsule().fill(Theme.surface2)
+                            Capsule().fill(item.color.main)
+                                .frame(width: geo.size.width * min(max(progress, 0), 1))
+                        }
+                    }
+                    .frame(height: 4)
+                    .padding(.horizontal, 14)
+                    .padding(.bottom, 12)
+                }
             }
+            .background(state == .now ? item.color.soft : Theme.surface)
+            .overlay(alignment: .leading) {
+                Rectangle().fill(item.color.main).frame(width: 4)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
+            .shadow(color: Color.black.opacity(state == .past ? 0 : 0.05), radius: 10, x: 0, y: 4)
+            .contentShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
         }
-        .padding(.vertical, 14)
-        .padding(.leading, 18)
-        .padding(.trailing, 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(state == .now ? item.color.soft : Theme.surface)
-        .overlay(alignment: .leading) {
-            Rectangle().fill(item.color.main).frame(width: 5)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
-        .shadow(color: Color.black.opacity(state == .past ? 0 : 0.05), radius: 10, x: 0, y: 4)
-        .contentShape(RoundedRectangle(cornerRadius: Theme.radius, style: .continuous))
+        .buttonStyle(.plain)
+        .opacity(state == .past ? 0.55 : 1)
     }
 }
