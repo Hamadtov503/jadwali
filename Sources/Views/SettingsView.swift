@@ -45,73 +45,60 @@ struct SettingsView: View {
             Form {
  Group {
                 Section(header: SectionTitle("المواد الدراسية")) {
-                    ForEach(s.subjects, id: \.self) { name in
-                        label(name, "book.fill", Theme.blue)
-                    }
-                    .onDelete { s.subjects.remove(atOffsets: $0) }
-                    if adding == .subject {
-                        HStack(spacing: 12) {
-                            SettingIcon(name: "book.fill", color: Theme.green)
-                            TextField("مادة جديدة", text: $newSubject.arabicDigits)
-                                .focused($focus, equals: .subject)
-                                .submitLabel(.done)
-                                .onSubmit { addSubject(); adding = nil }
-                            Button("إضافة") { addSubject(); adding = nil }
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundColor(Theme.deepBrown)
-                                .buttonStyle(.plain)
-                                .disabled(trimmed(newSubject).isEmpty)
-                            cancelButton { newSubject = "" }
+                    listCard(kind: .subject) {
+                        ForEach(Array(s.subjects.enumerated()), id: \.element) { i, name in
+                            if i > 0 { cardDivider }
+                            HStack(spacing: 12) {
+                                SettingIcon(name: "book.fill", color: Theme.blue)
+                                Text(name).foregroundColor(Theme.fg)
+                                Spacer()
+                                Button {
+                                    withAnimation { s.subjects.removeAll { $0 == name } }
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .font(.system(size: 15))
+                                        .foregroundColor(Theme.muted)
+                                        .frame(width: 36, height: 36)
+                                        .contentShape(Rectangle())
+                                }
+                                .buttonStyle(.borderless)
+                                .accessibilityLabel("حذف \(name)")
+                            }
+                            .padding(.horizontal, 16)
+                            .frame(minHeight: 50)
+                        }
+                        if adding == .subject {
+                            if !s.subjects.isEmpty { cardDivider }
+                            addRow("مادة جديدة", text: $newSubject, kind: .subject, icon: "book.fill", add: addSubject)
                         }
                     }
                 }
-                .tightSectionSpacing(2)
-
-                Section {
-                    plusButton(.subject)
-                }
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
 
                 Section(header: SectionTitle("الفصول")) {
-                    ForEach(s.classes) { c in
-                        Button { editingClass = ClassRef(id: c.id) } label: {
-                            HStack {
-                                label(c.name, "person.3.fill", c.color.main)
-                                    .foregroundColor(Theme.fg)
-                                Spacer()
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(Theme.muted)
+                    listCard(kind: .klass) {
+                        ForEach(Array(s.classes.enumerated()), id: \.element.id) { i, c in
+                            if i > 0 { cardDivider }
+                            Button { editingClass = ClassRef(id: c.id) } label: {
+                                HStack(spacing: 12) {
+                                    SettingIcon(name: "person.3.fill", color: c.color.main)
+                                    Text(c.name).foregroundColor(Theme.fg)
+                                    Spacer()
+                                    Image(systemName: "chevron.left")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(Theme.muted)
+                                }
+                                .padding(.horizontal, 16)
+                                .frame(minHeight: 50)
+                                .contentShape(Rectangle())
                             }
-                            .contentShape(Rectangle())
+                            .buttonStyle(.borderless)
                         }
-                        .buttonStyle(.plain)
-                    }
-                    .onDelete { s.classes.remove(atOffsets: $0) }
-                    if adding == .klass {
-                        HStack(spacing: 12) {
-                            SettingIcon(name: "person.3.fill", color: Theme.green)
-                            TextField("فصل جديد", text: $newClass.arabicDigits)
-                                .focused($focus, equals: .klass)
-                                .submitLabel(.done)
-                                .onSubmit { addClass(); adding = nil }
-                            Button("إضافة") { addClass(); adding = nil }
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundColor(Theme.deepBrown)
-                                .buttonStyle(.plain)
-                                .disabled(trimmed(newClass).isEmpty)
-                            cancelButton { newClass = "" }
+                        if adding == .klass {
+                            if !s.classes.isEmpty { cardDivider }
+                            addRow("فصل جديد", text: $newClass, kind: .klass, icon: "person.3.fill", add: addClass)
                         }
                     }
                 }
-                .tightSectionSpacing(2)
-
-                Section {
-                    plusButton(.klass)
-                }
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
 
                 Section(header: SectionTitle("اليوم الدراسي")) {
                     DatePicker(selection: dayStartBinding, displayedComponents: .hourAndMinute) {
@@ -204,7 +191,9 @@ struct SettingsView: View {
             }
             .appFormBackground()
             .sheet(item: $editingClass) { ref in
-                ClassDetailView(schoolClass: classBinding(ref.id))
+                ClassDetailView(schoolClass: classBinding(ref.id)) {
+                    s.classes.removeAll { $0.id == ref.id }
+                }
                     .accentColor(Theme.deepBrown)
             }
             .alert(backupMessage ?? "", isPresented: Binding(
@@ -246,39 +235,65 @@ struct SettingsView: View {
         )
     }
 
-    private func cancelButton(_ clear: @escaping () -> Void) -> some View {
-        Button {
-            clear()
-            focus = nil
-            withAnimation(.easeInOut(duration: 0.2)) { adding = nil }
-        } label: {
-            Image(systemName: "xmark.circle.fill")
-                .font(.system(size: 20))
-                .foregroundColor(Theme.muted)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("حذف الخانة")
+    private var cardDivider: some View {
+        Rectangle().fill(Theme.line).frame(height: 1).padding(.leading, 58)
     }
 
-    private func plusButton(_ kind: AddKind) -> some View {
-        HStack {
-            Spacer()
+    /// بطاقة القائمة وتحتها مباشرة علامة الزائد، في صف واحد حتى لا تتباعدا.
+    private func listCard<Rows: View>(kind: AddKind, @ViewBuilder rows: () -> Rows) -> some View {
+        let isEmpty = (kind == .subject ? s.subjects.isEmpty : s.classes.isEmpty) && adding != kind
+        return VStack(spacing: 8) {
+            if !isEmpty {
+                VStack(spacing: 0) { rows() }
+                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Theme.surface))
+            }
             Button {
                 withAnimation(.easeInOut(duration: 0.2)) { adding = kind }
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { focus = kind }
             } label: {
                 Image(systemName: "plus")
-                    .font(.system(size: 22, weight: .semibold))
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(Theme.onBg)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 38, height: 38)
                     .background(Circle().fill(Theme.onBg.opacity(0.08)))
-                    .frame(width: 44, height: 44)
-                    .contentShape(Rectangle())
+                    .contentShape(Circle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.borderless)
             .accessibilityLabel(kind == .subject ? "إضافة مادة" : "إضافة فصل")
-            Spacer()
         }
+        .frame(maxWidth: .infinity)
+        .listRowInsets(EdgeInsets())
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+    }
+
+    private func addRow(_ placeholder: String, text: Binding<String>, kind: AddKind,
+                        icon: String, add: @escaping () -> Void) -> some View {
+        HStack(spacing: 12) {
+            SettingIcon(name: icon, color: Theme.green)
+            TextField(placeholder, text: text.arabicDigits)
+                .focused($focus, equals: kind)
+                .submitLabel(.done)
+                .onSubmit { add(); adding = nil }
+            Button("إضافة") { add(); adding = nil }
+                .font(.subheadline.weight(.semibold))
+                .foregroundColor(Theme.deepBrown)
+                .buttonStyle(.borderless)
+                .disabled(trimmed(text.wrappedValue).isEmpty)
+            Button {
+                text.wrappedValue = ""
+                focus = nil
+                withAnimation(.easeInOut(duration: 0.2)) { adding = nil }
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(Theme.muted)
+            }
+            .buttonStyle(.borderless)
+            .accessibilityLabel("حذف الخانة")
+        }
+        .padding(.horizontal, 16)
+        .frame(minHeight: 50)
     }
 
     private func trimmed(_ t: String) -> String {
@@ -362,6 +377,7 @@ struct SettingsView: View {
 
 struct ClassDetailView: View {
     @Binding var schoolClass: SchoolClass
+    var onDelete: () -> Void
     @Environment(\.dismiss) private var dismiss
     @FocusState private var nameFocused: Bool
 
@@ -378,6 +394,17 @@ struct ClassDetailView: View {
                     }
                     Section(header: SectionTitle("اللون")) {
                         ColorGrid(selection: $schoolClass.color)
+                    }
+                    Section {
+                        Button(role: .destructive) {
+                            dismiss()
+                            onDelete()
+                        } label: {
+                            HStack(spacing: 12) {
+                                SettingIcon(name: "trash.fill", color: .red)
+                                Text("حذف الفصل")
+                            }
+                        }
                     }
                 }
                 .listRowBackground(Theme.surface)
