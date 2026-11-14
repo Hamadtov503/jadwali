@@ -1,7 +1,14 @@
 import SwiftUI
 import UIKit
+import UserNotifications
 
-final class AppDelegate: NSObject, UIApplicationDelegate {
+final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+    /// إظهار الإشعار حتى والتطبيق مفتوح.
+    func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
+        completionHandler([.banner, .sound])
+    }
+
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         let bar = UINavigationBarAppearance()
@@ -15,6 +22,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         UINavigationBar.appearance().compactAppearance = bar
         UITableView.appearance().backgroundColor = Theme.uiBackground
         UICollectionView.appearance().backgroundColor = Theme.uiBackground
+        UNUserNotificationCenter.current().delegate = self
         clearLaunchSnapshotCache()
         _ = Store.shared
         return true

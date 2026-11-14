@@ -149,6 +149,15 @@ struct SettingsView: View {
                     }
                 }
 
+                Section(header: SectionTitle("الإشعارات")) {
+                    Toggle(isOn: notifyBinding(\.notifyStart)) {
+                        label("تنبيه قبل بدء الحصة بخمس دقائق", "bell.badge.fill", Theme.orange)
+                    }
+                    Toggle(isOn: notifyBinding(\.notifyEnd)) {
+                        label("تنبيه قبل انتهاء الحصة بخمس دقائق", "hourglass.bottomhalf.filled", SubjectColor.purple.main)
+                    }
+                }
+
                 Section(header: SectionTitle("النسخ الاحتياطي")) {
                     Button {
                         guard let data = store.backupData() else { return }
@@ -330,6 +339,23 @@ struct SettingsView: View {
             set: { n in
                 s.periodsPerDay = n
                 if s.breakAfter >= n { s.breakAfter = max(1, n - 1) }
+            }
+        )
+    }
+
+    /// تشغيل الإشعار يطلب الإذن أول مرة، وإن رُفض يرجع المفتاح مغلقًا.
+    private func notifyBinding(_ key: WritableKeyPath<SchoolSettings, Bool>) -> Binding<Bool> {
+        Binding(
+            get: { s[keyPath: key] },
+            set: { on in
+                s[keyPath: key] = on
+                guard on else { return }
+                Notifier.shared.requestPermission { granted in
+                    if !granted {
+                        s[keyPath: key] = false
+                        backupMessage = "اسمح لتطبيق جدولي بالإشعارات من إعدادات الجهاز."
+                    }
+                }
             }
         )
     }

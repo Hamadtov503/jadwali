@@ -72,6 +72,7 @@ final class Store: ObservableObject {
         let saved = Saved(items: items, isExample: isExample, settings: settings, rev: 2, userName: nil)
         guard let data = try? JSONEncoder().encode(saved) else { return }
         try? data.write(to: url, options: .atomic)
+        Notifier.shared.reschedule(items: items, settings: settings, isExample: isExample)
     }
 
     /// يعيد حساب أوقات الحصص المرتبطة برقم حصة بعد تغيير الإعدادات.

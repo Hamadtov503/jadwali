@@ -87,12 +87,14 @@ struct SchoolSettings: Codable, Equatable {
     var classes: [SchoolClass] = []
     /// عدد الحصص في يوم معيّن إن كان أقل من العدد العام (المفتاح: رقم اليوم).
     var dayPeriods: [String: Int] = [:]
+    var notifyStart = false
+    var notifyEnd = false
 
     init() {}
 
     private enum CodingKeys: String, CodingKey {
         case dayStart, periodsPerDay, periodLength, passing, hasBreak, breakAfter, breakLength
-        case schoolDays, subjects, classes, dayPeriods
+        case schoolDays, subjects, classes, dayPeriods, notifyStart, notifyEnd
     }
 
     /// يقرأ الإعدادات القديمة التي لا تحوي الحقول الجديدة.
@@ -110,6 +112,8 @@ struct SchoolSettings: Codable, Equatable {
         subjects = try c.decodeIfPresent([String].self, forKey: .subjects) ?? []
         classes = try c.decodeIfPresent([SchoolClass].self, forKey: .classes) ?? []
         dayPeriods = try c.decodeIfPresent([String: Int].self, forKey: .dayPeriods) ?? [:]
+        notifyStart = try c.decodeIfPresent(Bool.self, forKey: .notifyStart) ?? false
+        notifyEnd = try c.decodeIfPresent(Bool.self, forKey: .notifyEnd) ?? false
     }
 
     /// عدد حصص يوم معيّن.
