@@ -22,6 +22,8 @@ targets:
         UILaunchStoryboardName: Launch
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
         UIRequiresFullScreen: true
         UIUserInterfaceStyle: Light
         ITSAppUsesNonExemptEncryption: false

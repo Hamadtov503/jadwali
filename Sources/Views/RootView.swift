@@ -23,6 +23,10 @@ struct RootView: View {
     @State private var confirmClear = false
     @AppStorage("userName") private var userName = ""
     @Namespace private var modeNS
+    @Environment(\.verticalSizeClass) private var verticalSize
+
+    /// في صفحة الأسبوع بالعرض يُخفى الترحيب ليتسع الجدول.
+    private var fullWeek: Bool { mode == .week && verticalSize == .compact }
 
     private var mode: ViewMode { ViewMode(rawValue: modeRaw) ?? .day }
 
@@ -31,12 +35,14 @@ struct RootView: View {
             Theme.bg.ignoresSafeArea()
 
             VStack(spacing: 0) {
+                if !fullWeek {
                 header
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
                     .padding(.bottom, 12)
+                }
 
-                if store.isExample {
+                if store.isExample && !fullWeek {
                     exampleBanner
                         .padding(.horizontal, 16)
                         .padding(.bottom, 12)
@@ -76,6 +82,9 @@ struct RootView: View {
                             onDetails: { item in editing = EditorTarget(item: item, isNew: false) })
                     .zIndex(1)
             }
+        }
+        .onChange(of: modeRaw) { new in
+            AppDelegate.setOrientation(new == ViewMode.week.rawValue ? .allButUpsideDown : .portrait)
         }
         .sheet(isPresented: $showSettings) {
             SettingsView(settings: store.settings)

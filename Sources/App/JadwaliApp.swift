@@ -3,6 +3,31 @@ import UIKit
 import UserNotifications
 
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+    /// الوضع بالعرض مسموح في صفحة الأسبوع فقط.
+    static var orientationLock: UIInterfaceOrientationMask = .portrait
+
+    func application(_ application: UIApplication,
+                     supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+        AppDelegate.orientationLock
+    }
+
+    /// يغيّر الاتجاهات المسموحة، ويعيد الشاشة إلى الطول إن لزم.
+    static func setOrientation(_ mask: UIInterfaceOrientationMask) {
+        orientationLock = mask
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
+        if #available(iOS 16.0, *) {
+            scene.keyWindow?.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+            if mask == .portrait {
+                scene.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait)) { _ in }
+            }
+        } else {
+            if mask == .portrait {
+                UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
+            }
+            UIViewController.attemptRotationToDeviceOrientation()
+        }
+    }
+
     /// إظهار الإشعار حتى والتطبيق مفتوح.
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification,
                                 withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {

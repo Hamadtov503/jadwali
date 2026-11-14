@@ -21,6 +21,9 @@ struct WeekView: View {
             let slots = store.settings.periods()
 
             GeometryReader { geo in
+                if geo.size.width > geo.size.height {
+                    landscape(size: geo.size, days: days, slots: slots, today: today, now: now)
+                } else {
                 let count = CGFloat(max(days.count, 1))
                 let free = geo.size.width - 32 - 24 - labelWidth - spacing * count
                 let side = min(max(free / count, 46), 90)
@@ -33,7 +36,7 @@ struct WeekView: View {
                             HStack(spacing: spacing) {
                                 periodLabel(i + 1, slot)
                                 ForEach(days, id: \.self) { d in
-                                    cell(day: d, period: i + 1, side: side,
+                                    cell(day: d, period: i + 1, w: side, h: side,
                                          isNow: d == today && slot.start <= now && now < slot.end)
                                 }
                             }
@@ -76,7 +79,106 @@ struct WeekView: View {
 
                     Color.clear.frame(height: 24)
                 }
+                }
             }
+        }
+    }
+
+    // MARK: - Landscape: الحصص أعمدة والأيام صفوف
+
+    private enum Col: Hashable { case period(Int), rest }
+
+    private func landscape(size: CGSize, days: [Int], slots: [SchoolSettings.Slot], today: Int, now: Int) -> some View {
+        let dayLabel: CGFloat = 62
+        let restW: CGFloat = 24
+        let n = slots.count
+        let hasRest = store.settings.breakSlot() != nil && store.settings.breakAfter < n
+        var cols: [Col] = []
+        for p in 1...max(n, 1) {
+            cols.append(.period(p))
+            if hasRest && p == store.settings.breakAfter { cols.append(.rest) }
+        }
+        let gaps = spacing * CGFloat(cols.count)
+        let cw = max((size.width - 32 - 24 - dayLabel - (hasRest ? restW : 0) - gaps) / CGFloat(max(n, 1)), 40)
+        let headerH: CGFloat = 40
+        let rows = CGFloat(max(days.count, 1))
+        let ch = min(max((size.height - 24 - 16 - headerH - spacing * rows - 6 * rows) / rows, 34), cw)
+
+        return ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: spacing) {
+                HStack(spacing: spacing) {
+                    Color.clear.frame(width: dayLabel, height: 1)
+                    ForEach(cols, id: \.self) { col in
+                        switch col {
+                        case .period(let p):
+                            VStack(spacing: 1) {
+                                Text("الحصة \(Fmt.n(p))")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundColor(Theme.fg)
+                                if p <= slots.count {
+                                    Text(Fmt.range(slots[p - 1].start, slots[p - 1].end))
+                                        .font(.caption2.weight(.medium).monospacedDigit())
+                                        .foregroundColor(Color(UIColor(hex: 0x1D6B48)))
+                                        .lineLimit(1)
+                                        .minimumScaleFactor(0.6)
+                                }
+                            }
+                            .frame(width: cw, height: headerH)
+                        case .rest:
+                            Image(systemName: "cup.and.saucer.fill")
+                                .font(.system(size: 12))
+                                .foregroundColor(Color(UIColor(hex: 0x1F4E8C)))
+                                .frame(width: restW, height: headerH)
+                        }
+                    }
+                }
+
+                ForEach(days, id: \.self) { d in
+                    let isToday = d == today
+                    HStack(spacing: spacing) {
+                        VStack(spacing: 3) {
+                            Text(Weekdays.names[d])
+                                .font(.caption.weight(.semibold))
+                                .foregroundColor(Theme.fg)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                            Text(Fmt.dayNumber(Weekdays.date(of: d)))
+                                .font(.caption2.weight(.bold).monospacedDigit())
+                                .foregroundColor(.white)
+                                .frame(width: 22, height: 22)
+                                .background(Circle().fill(Color(UIColor(hex: 0x7B1E3A))))
+                        }
+                        .frame(width: dayLabel)
+                        ForEach(cols, id: \.self) { col in
+                            switch col {
+                            case .period(let p):
+                                let slot = p <= slots.count ? slots[p - 1] : (start: 0, end: 0)
+                                cell(day: d, period: p, w: cw, h: ch,
+                                     isNow: isToday && slot.start <= now && now < slot.end)
+                            case .rest:
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .fill(Color(UIColor(hex: 0x1F4E8C)))
+                                    .frame(width: restW, height: ch)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 3)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(isToday ? Theme.deepBrown.opacity(0.08) : Color.clear)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .stroke(isToday ? Theme.deepBrown : Color.clear, lineWidth: 2)
+                            )
+                            .padding(.horizontal, -4)
+                    )
+                }
+            }
+            .padding(12)
+            .card()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity)
         }
     }
 
@@ -141,12 +243,12 @@ struct WeekView: View {
     }
 
     @ViewBuilder
-    private func cell(day: Int, period: Int, side: CGFloat, isNow: Bool) -> some View {
+    private func cell(day: Int, period: Int, w: CGFloat, h: CGFloat, isNow: Bool) -> some View {
         let item = store.item(day: day, period: period)
         if item == nil && period > store.settings.periodCount(on: day) {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .fill(Color(UIColor(hex: 0xD8D5D0)))
-                .frame(width: side, height: side)
+                .frame(width: w, height: h)
                 .accessibilityLabel("\(Weekdays.names[day]) لا توجد حصة \(Fmt.n(period))")
         } else {
         Button { onTap(day, period) } label: {
@@ -175,7 +277,7 @@ struct WeekView: View {
                         .stroke(Theme.line, style: StrokeStyle(lineWidth: 1.2, dash: [4, 3]))
                 }
             }
-            .frame(width: side, height: side)
+            .frame(width: w, height: h)
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .stroke(isNow ? Theme.orange : Color.clear, lineWidth: 2.5)
