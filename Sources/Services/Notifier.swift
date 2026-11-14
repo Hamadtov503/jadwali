@@ -1,7 +1,7 @@
 import Foundation
 import UserNotifications
 
-/// يجدول إشعارات أسبوعية متكررة قبل بداية الحصة ونهايتها بخمس دقائق.
+/// يجدول إشعارات أسبوعية متكررة قبل بداية الحصة ونهايتها بـ٥ دقائق.
 final class Notifier {
     static let shared = Notifier()
     private let center = UNUserNotificationCenter.current()

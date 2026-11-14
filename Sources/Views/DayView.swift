@@ -325,7 +325,7 @@ struct ClassRow: View {
 
 // MARK: - Banners
 
-/// تنبيهات قبل نهاية الحصة الحالية أو بداية الحصة القادمة بخمس دقائق.
+/// تنبيهات قبل نهاية الحصة الحالية أو بداية الحصة القادمة بـ٥ دقائق.
 struct AlertBanners: View {
     let items: [ClassItem]
     let now: Int

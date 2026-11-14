@@ -151,10 +151,10 @@ struct SettingsView: View {
 
                 Section(header: SectionTitle("الإشعارات")) {
                     Toggle(isOn: notifyBinding(\.notifyStart)) {
-                        label("تنبيه قبل بدء الحصة بخمس دقائق", "bell.badge.fill", Theme.orange)
+                        label("تنبيه قبل بدء الحصة بـ٥ دقائق", "bell.badge.fill", Theme.orange)
                     }
                     Toggle(isOn: notifyBinding(\.notifyEnd)) {
-                        label("تنبيه قبل انتهاء الحصة بخمس دقائق", "hourglass.bottomhalf.filled", SubjectColor.purple.main)
+                        label("تنبيه قبل انتهاء الحصة بـ٥ دقائق", "hourglass.bottomhalf.filled", SubjectColor.purple.main)
                     }
                 }
 
