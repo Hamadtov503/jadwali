@@ -53,7 +53,9 @@ struct SettingsView: View {
                                 .focused($focused, equals: row.id)
                                 .submitLabel(.next)
                                 .onSubmit { insertSubject(after: row.id) }
-                            addButton { insertSubject(after: row.id) }
+                            if row.id == subjects.last?.id {
+                                addButton { insertSubject(after: row.id) }
+                            }
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) { deleteSubject(row.id) } label: {
@@ -75,7 +77,9 @@ struct SettingsView: View {
                                 .focused($focused, equals: c.id)
                                 .submitLabel(.next)
                                 .onSubmit { insertClass(after: c.id) }
-                            addButton { insertClass(after: c.id) }
+                            if c.id == s.classes.last?.id {
+                                addButton { insertClass(after: c.id) }
+                            }
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) { deleteClass(c.id) } label: {
