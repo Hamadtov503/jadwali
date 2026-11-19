@@ -6,7 +6,37 @@ struct WeekView: View {
     var onTap: (Int, Int) -> Void
     var onClear: () -> Void
 
+    @State private var weekOffset = 0
+    @State private var forward = true
+
     private let labelWidth: CGFloat = 70
+
+    /// تاريخ مرجعي داخل الأسبوع المعروض.
+    private var refDate: Date {
+        Weekdays.calendar.date(byAdding: .day, value: 7 * weekOffset, to: Date()) ?? Date()
+    }
+
+    private var slide: AnyTransition {
+        .asymmetric(insertion: .move(edge: forward ? .trailing : .leading).combined(with: .opacity),
+                    removal: .move(edge: forward ? .leading : .trailing).combined(with: .opacity))
+    }
+
+    /// السحب لليمين يأتي بالأسبوع التالي (التالي على اليسار في الاتجاه العربي)، ولليسار بالسابق.
+    private var swipe: some Gesture {
+        DragGesture(minimumDistance: 25, coordinateSpace: .global)
+            .onEnded { v in
+                let dx = v.translation.width, dy = v.translation.height
+                guard abs(dx) > abs(dy) * 1.3, abs(dx) > 50 else { return }
+                changeWeek(dx > 0 ? 1 : -1)
+            }
+    }
+
+    private func changeWeek(_ delta: Int) {
+        forward = delta > 0
+        DispatchQueue.main.async {
+            withAnimation(.spring(response: 0.42, dampingFraction: 0.88)) { weekOffset += delta }
+        }
+    }
     private let spacing: CGFloat = 6
 
     var body: some View {
@@ -15,7 +45,8 @@ struct WeekView: View {
 
     private var content: some View {
         TimelineView(.periodic(from: Date(), by: 60)) { context in
-            let today = Weekdays.weekday(of: context.date)
+            // تمييز اليوم الحالي فقط في الأسبوع الحالي.
+            let today = weekOffset == 0 ? Weekdays.weekday(of: context.date) : -1
             let now = Weekdays.minutes(of: context.date)
             let days = store.weekDays
             let slots = store.settings.periods()
@@ -29,9 +60,10 @@ struct WeekView: View {
                 let side = min(max(free / count, 46), 90)
 
                 ScrollView(.vertical, showsIndicators: false) {
-                    WeekCaption(date: context.date)
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 8)
+                    weekHeader
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 10)
+                    ZStack {
                     VStack(spacing: spacing) {
                         headerRow(days: days, today: today, side: side)
 
@@ -67,6 +99,9 @@ struct WeekView: View {
                     .card()
                     .padding(.horizontal, 16)
                     .frame(maxWidth: .infinity)
+                    .id(weekOffset)
+                    .transition(slide)
+                    }
 
                     if !store.items.isEmpty && !store.isExample {
                         Button(action: onClear) {
@@ -83,9 +118,76 @@ struct WeekView: View {
 
                     Color.clear.frame(height: 24)
                 }
+                .simultaneousGesture(swipe)
                 }
             }
         }
+    }
+
+    // MARK: - Week header
+
+    /// «الأسبوع ١٣» مع الفصل وتاريخ الأسبوع، وأسهم للتنقل.
+    private var weekHeader: some View {
+        let sunday = Weekdays.date(of: 0, from: refDate)
+        let thursday = Weekdays.date(of: 4, from: refDate)
+        let range = SchoolCalendar.dayRange(sunday, thursday)
+        let title: String
+        let sub: String
+        if let w = SchoolCalendar.week(on: sunday) {
+            title = "الأسبوع \(Fmt.n(w.number))"
+            sub = "\(w.semester) · \(range)"
+        } else if let h = SchoolCalendar.holiday(on: sunday) ?? SchoolCalendar.holiday(on: thursday) {
+            title = h.name
+            sub = range
+        } else {
+            title = "خارج العام الدراسي"
+            sub = range
+        }
+        return HStack(spacing: 8) {
+            navButton("chevron.right", label: "الأسبوع السابق") { changeWeek(-1) }
+            Spacer(minLength: 0)
+            VStack(spacing: 3) {
+                Text(title)
+                    .font(.system(.headline, design: .rounded))
+                    .foregroundColor(Theme.onBg)
+                Text(sub)
+                    .font(.caption)
+                    .foregroundColor(Theme.onBg.opacity(0.65))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                if weekOffset != 0 {
+                    Button {
+                        forward = weekOffset < 0
+                        DispatchQueue.main.async {
+                            withAnimation(.spring(response: 0.42, dampingFraction: 0.88)) { weekOffset = 0 }
+                        }
+                    } label: {
+                        Text("هذا الأسبوع")
+                            .font(.caption.weight(.semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 4)
+                            .background(Capsule().fill(Theme.deepBrown))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 2)
+                }
+            }
+            Spacer(minLength: 0)
+            navButton("chevron.left", label: "الأسبوع التالي") { changeWeek(1) }
+        }
+    }
+
+    private func navButton(_ icon: String, label: String, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(Theme.onBg)
+                .frame(width: 36, height: 36)
+                .background(Circle().fill(Theme.onBg.opacity(0.08)))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 
     // MARK: - Landscape: الحصص أعمدة والأيام صفوف
@@ -94,7 +196,7 @@ struct WeekView: View {
 
     /// هذا اليوم من الأسبوع الحالي إجازة رسمية.
     private func isHoliday(_ day: Int) -> Bool {
-        SchoolCalendar.holiday(on: Weekdays.date(of: day)) != nil
+        SchoolCalendar.holiday(on: Weekdays.date(of: day, from: refDate)) != nil
     }
 
     private func landscape(size: CGSize, days: [Int], slots: [SchoolSettings.Slot], today: Int, now: Int) -> some View {
@@ -114,6 +216,10 @@ struct WeekView: View {
         let ch = min(max((size.height - 24 - 16 - headerH - spacing * rows - 6 * rows) / rows, 34), cw)
 
         return ScrollView(.vertical, showsIndicators: false) {
+            weekHeader
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+            ZStack {
             VStack(spacing: spacing) {
                 HStack(spacing: spacing) {
                     Color.clear.frame(width: dayLabel, height: 1)
@@ -151,7 +257,7 @@ struct WeekView: View {
                                 .foregroundColor(Theme.fg)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
-                            Text(Fmt.dayNumber(Weekdays.date(of: d)))
+                            Text(Fmt.dayNumber(Weekdays.date(of: d, from: refDate)))
                                 .font(.caption2.weight(.bold).monospacedDigit())
                                 .foregroundColor(.white)
                                 .frame(width: 22, height: 22)
@@ -189,7 +295,11 @@ struct WeekView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity)
+            .id(weekOffset)
+            .transition(slide)
+            }
         }
+        .simultaneousGesture(swipe)
     }
 
     private func headerRow(days: [Int], today: Int, side: CGFloat) -> some View {
@@ -202,7 +312,7 @@ struct WeekView: View {
                         .font(.caption.weight(.semibold))
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
-                    Text(Fmt.dayNumber(Weekdays.date(of: d)))
+                    Text(Fmt.dayNumber(Weekdays.date(of: d, from: refDate)))
                         .font(.caption2.weight(.bold).monospacedDigit())
                         .foregroundColor(.white)
                         .frame(width: 22, height: 22)

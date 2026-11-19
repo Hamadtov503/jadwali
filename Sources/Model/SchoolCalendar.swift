@@ -85,6 +85,21 @@ enum SchoolCalendar {
         return f
     }()
 
+    private static let dayOnly: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "ar_SA@calendar=gregorian")
+        f.calendar = Weekdays.calendar
+        f.dateFormat = "d"
+        return f
+    }()
+
+    /// «١٥ – ١٩ نوفمبر» أو «٢٩ نوفمبر – ٣ ديسمبر»
+    static func dayRange(_ a: Date, _ b: Date) -> String {
+        let sameMonth = Weekdays.calendar.component(.month, from: a) == Weekdays.calendar.component(.month, from: b)
+        let first = sameMonth ? dayOnly.string(from: a) : shortDate.string(from: a)
+        return Fmt.ar("\(first) – \(shortDate.string(from: b))")
+    }
+
     /// «من ٢٠ نوفمبر إلى ٢٨ نوفمبر»
     static func rangeText(_ s: Span) -> String {
         Fmt.ar("من \(shortDate.string(from: s.start)) إلى \(shortDate.string(from: s.end))")
