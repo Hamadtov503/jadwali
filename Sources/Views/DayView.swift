@@ -4,6 +4,39 @@ struct DayView: View {
     @EnvironmentObject var store: Store
     @Binding var selectedDay: Int
     @State private var forward = true
+    @State private var weekOffset = 0
+
+    /// تاريخ مرجعي داخل الأسبوع المعروض.
+    private var refDate: Date {
+        Weekdays.calendar.date(byAdding: .day, value: 7 * weekOffset, to: Date()) ?? Date()
+    }
+
+    /// السحب لليمين يأتي بالأسبوع التالي، ولليسار بالسابق (مثل صفحة الأسبوع).
+    private var swipe: some Gesture {
+        DragGesture(minimumDistance: 25, coordinateSpace: .global)
+            .onEnded { v in
+                let dx = v.translation.width, dy = v.translation.height
+                guard abs(dx) > abs(dy) * 1.3, abs(dx) > 50 else { return }
+                changeWeek(dx > 0 ? 1 : -1)
+            }
+    }
+
+    private func changeWeek(_ delta: Int) {
+        forward = delta > 0
+        DispatchQueue.main.async {
+            withAnimation(Self.slide) { weekOffset += delta }
+        }
+    }
+
+    private func backToThisWeek() {
+        forward = weekOffset < 0
+        DispatchQueue.main.async {
+            withAnimation(Self.slide) {
+                weekOffset = 0
+                selectedDay = Weekdays.weekday(of: Date())
+            }
+        }
+    }
 
     private static let slide = Animation.spring(response: 0.45, dampingFraction: 0.88)
 
@@ -23,16 +56,36 @@ struct DayView: View {
 
     var body: some View {
         TimelineView(.periodic(from: Date(), by: 30)) { context in
-            let today = Weekdays.weekday(of: context.date)
+            // اليوم الحالي يُميَّز فقط في الأسبوع الحالي.
+            let today = weekOffset == 0 ? Weekdays.weekday(of: context.date) : -1
             let now = Weekdays.minutes(of: context.date)
             let items = store.classes(on: selectedDay)
             let isToday = selectedDay == today
-            let holiday = SchoolCalendar.holiday(on: Weekdays.date(of: selectedDay, from: context.date))
+            let holiday = SchoolCalendar.holiday(on: Weekdays.date(of: selectedDay, from: refDate))
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    WeekCaption(date: Weekdays.date(of: selectedDay, from: context.date))
-                    DayStrip(selectedDay: dayBinding, today: today)
+                    HStack {
+                        WeekCaption(date: Weekdays.date(of: selectedDay, from: refDate))
+                        if weekOffset != 0 {
+                            Button(action: backToThisWeek) {
+                                Text("هذا الأسبوع")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 4)
+                                    .background(Capsule().fill(Theme.deepBrown))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    ZStack {
+                        DayStrip(selectedDay: dayBinding, today: today, ref: refDate)
+                            .id(weekOffset)
+                            .transition(.asymmetric(
+                                insertion: .move(edge: forward ? .trailing : .leading).combined(with: .opacity),
+                                removal: .move(edge: forward ? .leading : .trailing).combined(with: .opacity)))
+                    }
 
                     ZStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 16) {
@@ -87,7 +140,7 @@ struct DayView: View {
                     }
                     }
                     }
-                    .id(selectedDay)
+                    .id("\(weekOffset)-\(selectedDay)")
                     .transition(.asymmetric(
                         insertion: .move(edge: forward ? .trailing : .leading).combined(with: .opacity),
                         removal: .move(edge: forward ? .leading : .trailing).combined(with: .opacity)))
@@ -96,6 +149,7 @@ struct DayView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 24)
             }
+            .simultaneousGesture(swipe)
         }
     }
 
@@ -113,6 +167,7 @@ struct DayStrip: View {
     @EnvironmentObject var store: Store
     @Binding var selectedDay: Int
     let today: Int
+    var ref: Date = Date()
     @Namespace private var ns
 
     private var days: [Int] {
@@ -133,7 +188,7 @@ struct DayStrip: View {
                             .lineLimit(1)
                             .minimumScaleFactor(0.6)
                             .foregroundColor(selected ? Color.white.opacity(0.85) : (d == today ? SubjectColor.orange.ink : Theme.muted))
-                        Text(Fmt.dayNumber(Weekdays.date(of: d)))
+                        Text(Fmt.dayNumber(Weekdays.date(of: d, from: ref)))
                             .font(.system(.title3, design: .rounded).weight(.semibold).monospacedDigit())
                             .foregroundColor(selected ? .white : Theme.fg)
                         HStack(spacing: 3) {
