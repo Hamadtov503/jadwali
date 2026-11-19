@@ -74,6 +74,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 struct JadwaliApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var store = Store.shared
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         // لوحة المفاتيح في iOS 16 تُرسم داخل التطبيق نفسه وتأخذ الأرقام من إعدادات منطقته.
@@ -91,6 +92,9 @@ struct JadwaliApp: App {
                 .environment(\.locale, Fmt.locale)
                 .accentColor(Theme.deepBrown)
                 .preferredColorScheme(.light)
+                .onChange(of: scenePhase) { phase in
+                    if phase == .active { store.refreshNotifications() }
+                }
         }
     }
 }

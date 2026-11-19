@@ -29,6 +29,9 @@ struct WeekView: View {
                 let side = min(max(free / count, 46), 90)
 
                 ScrollView(.vertical, showsIndicators: false) {
+                    WeekCaption(date: context.date)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 8)
                     VStack(spacing: spacing) {
                         headerRow(days: days, today: today, side: side)
 
@@ -38,6 +41,7 @@ struct WeekView: View {
                                 ForEach(days, id: \.self) { d in
                                     cell(day: d, period: i + 1, w: side, h: side,
                                          isNow: d == today && slot.start <= now && now < slot.end)
+                                        .opacity(isHoliday(d) ? 0.4 : 1)
                                 }
                             }
                             if let b = store.settings.breakSlot(), i + 1 == store.settings.breakAfter {
@@ -87,6 +91,11 @@ struct WeekView: View {
     // MARK: - Landscape: الحصص أعمدة والأيام صفوف
 
     private enum Col: Hashable { case period(Int), rest }
+
+    /// هذا اليوم من الأسبوع الحالي إجازة رسمية.
+    private func isHoliday(_ day: Int) -> Bool {
+        SchoolCalendar.holiday(on: Weekdays.date(of: day)) != nil
+    }
 
     private func landscape(size: CGSize, days: [Int], slots: [SchoolSettings.Slot], today: Int, now: Int) -> some View {
         let dayLabel: CGFloat = 62
@@ -155,6 +164,7 @@ struct WeekView: View {
                                 let slot = p <= slots.count ? slots[p - 1] : (start: 0, end: 0)
                                 cell(day: d, period: p, w: cw, h: ch,
                                      isNow: isToday && slot.start <= now && now < slot.end)
+                                    .opacity(isHoliday(d) ? 0.4 : 1)
                             case .rest:
                                 RoundedRectangle(cornerRadius: 8, style: .continuous)
                                     .fill(Color(UIColor(hex: 0x1F4E8C)))
@@ -197,6 +207,11 @@ struct WeekView: View {
                         .foregroundColor(.white)
                         .frame(width: 22, height: 22)
                         .background(Circle().fill(Color(UIColor(hex: 0x7B1E3A))))
+                    if isHoliday(d) {
+                        Text("إجازة")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(isToday ? .white : Theme.orange)
+                    }
                 }
                 .foregroundColor(isToday ? .white : Theme.fg)
                 .frame(width: side)

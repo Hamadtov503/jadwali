@@ -1,7 +1,7 @@
 import Foundation
 import UserNotifications
 
-/// يجدول إشعارات أسبوعية متكررة قبل بداية الحصة ونهايتها بـ٥ دقائق.
+/// يجدول إشعارات قبل بداية الحصة ونهايتها بـ٥ دقائق، لأيام الدراسة الفعلية فقط.
 final class Notifier {
     static let shared = Notifier()
     private let center = UNUserNotificationCenter.current()
@@ -57,30 +57,28 @@ final class Notifier {
             }
         }
 
-        // الأقرب أولًا، حتى لا تضيع إشعارات الأيام القريبة إن تجاوزنا الحد.
-        let now = Date()
+        // إشعارات بتاريخ محدد للأيام القادمة، تتخطى الإجازات الرسمية وما بعد نهاية العام.
+        // تُعاد جدولتها عند كل فتح للتطبيق أو حفظ.
         let cal = Weekdays.calendar
-        let nowDay = Weekdays.weekday(of: now)
-        let nowMin = Weekdays.minutes(of: now)
-        func distance(_ e: Event) -> Int {
-            var d = (e.weekday - nowDay) * 1440 + (e.minute - nowMin)
-            if d <= 0 { d += 7 * 1440 }
-            return d
-        }
-        let chosen = events.filter { $0.minute >= 0 }.sorted { distance($0) < distance($1) }.prefix(limit)
-
-        for (i, e) in chosen.enumerated() {
-            let content = UNMutableNotificationContent()
-            content.title = e.title
-            content.body = e.body
-            content.sound = .default
-            var dc = DateComponents()
-            dc.calendar = cal
-            dc.weekday = e.weekday + 1
-            dc.hour = e.minute / 60
-            dc.minute = e.minute % 60
-            let trigger = UNCalendarNotificationTrigger(dateMatching: dc, repeats: true)
-            center.add(UNNotificationRequest(identifier: "class-\(i)", content: content, trigger: trigger))
+        let now = Date()
+        let today = cal.startOfDay(for: now)
+        var count = 0
+        outer: for offset in 0..<21 {
+            guard let date = cal.date(byAdding: .day, value: offset, to: today) else { continue }
+            guard SchoolCalendar.isStudyDay(date) else { continue }
+            let wd = Weekdays.weekday(of: date)
+            for e in events.filter({ $0.weekday == wd && $0.minute >= 0 }).sorted(by: { $0.minute < $1.minute }) {
+                guard let fire = cal.date(byAdding: .minute, value: e.minute, to: date), fire > now else { continue }
+                let content = UNMutableNotificationContent()
+                content.title = e.title
+                content.body = e.body
+                content.sound = .default
+                let dc = cal.dateComponents([.year, .month, .day, .hour, .minute], from: fire)
+                let trigger = UNCalendarNotificationTrigger(dateMatching: dc, repeats: false)
+                center.add(UNNotificationRequest(identifier: "class-\(count)", content: content, trigger: trigger))
+                count += 1
+                if count >= limit { break outer }
+            }
         }
     }
 

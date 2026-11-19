@@ -27,17 +27,34 @@ struct DayView: View {
             let now = Weekdays.minutes(of: context.date)
             let items = store.classes(on: selectedDay)
             let isToday = selectedDay == today
+            let holiday = SchoolCalendar.holiday(on: Weekdays.date(of: selectedDay, from: context.date))
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    WeekCaption(date: Weekdays.date(of: selectedDay, from: context.date))
                     DayStrip(selectedDay: dayBinding, today: today)
 
                     ZStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 16) {
-                    if isToday {
+                    if isToday && holiday == nil {
                         AlertBanners(items: items, now: now)
                     }
-                    if items.isEmpty && !store.isSchoolDay(selectedDay) {
+                    if let h = holiday {
+                        VStack(spacing: 10) {
+                            Image(systemName: "beach.umbrella.fill")
+                                .font(.system(size: 38))
+                                .foregroundColor(Theme.orange)
+                            Text(h.name)
+                                .font(.system(.title3, design: .rounded).weight(.semibold))
+                                .foregroundColor(Theme.fg)
+                            Text(SchoolCalendar.rangeText(h))
+                                .font(.subheadline)
+                                .foregroundColor(Theme.muted)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 36)
+                        .card()
+                    } else if items.isEmpty && !store.isSchoolDay(selectedDay) {
                         VStack(spacing: 12) {
                             Image(systemName: "sun.max.fill")
                                 .font(.system(size: 40))
@@ -375,6 +392,26 @@ struct AlertBanners: View {
         case 2: return "دقيقتين"
         case 3...10: return "\(Fmt.n(m)) دقائق"
         default: return "\(Fmt.n(m)) دقيقة"
+        }
+    }
+}
+
+/// «الفصل الدراسي الأول · الأسبوع ١٣» أو اسم الإجازة.
+struct WeekCaption: View {
+    let date: Date
+
+    var body: some View {
+        let text: String? = {
+            if let w = SchoolCalendar.week(on: date) {
+                return "\(w.semester) · الأسبوع \(Fmt.n(w.number))"
+            }
+            return SchoolCalendar.holiday(on: date)?.name
+        }()
+        if let t = text {
+            Text(t)
+                .font(.footnote.weight(.semibold))
+                .foregroundColor(Theme.onBg.opacity(0.75))
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }

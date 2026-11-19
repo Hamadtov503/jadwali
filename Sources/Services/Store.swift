@@ -45,6 +45,11 @@ final class Store: ObservableObject {
         save()
     }
 
+    /// تُستدعى عند فتح التطبيق، لأن الإشعارات مجدولة لأيام محددة قادمة.
+    func refreshNotifications() {
+        Notifier.shared.reschedule(items: items, settings: settings, isExample: isExample)
+    }
+
     // MARK: - Backup
 
     /// نسخة احتياطية من الجدول والإعدادات واسم المستخدم.
