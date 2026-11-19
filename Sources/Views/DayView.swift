@@ -451,22 +451,22 @@ struct AlertBanners: View {
     }
 }
 
-/// «الفصل الدراسي الأول · الأسبوع ١٣» أو اسم الإجازة.
+/// «الأسبوع ١٣» وتحته الفصل وتاريخ الأسبوع، مثل رأس صفحة الأسبوع.
 struct WeekCaption: View {
     let date: Date
 
     var body: some View {
-        let text: String? = {
-            if let w = SchoolCalendar.week(on: date) {
-                return "\(w.semester) · الأسبوع \(Fmt.n(w.number))"
-            }
-            return SchoolCalendar.holiday(on: date)?.name
-        }()
-        if let t = text {
-            Text(t)
-                .font(.footnote.weight(.semibold))
-                .foregroundColor(Theme.onBg.opacity(0.75))
-                .frame(maxWidth: .infinity, alignment: .leading)
+        let (title, sub) = SchoolCalendar.weekTitle(for: date)
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.system(.headline, design: .rounded))
+                .foregroundColor(Theme.onBg)
+            Text(sub)
+                .font(.caption)
+                .foregroundColor(Theme.onBg.opacity(0.65))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

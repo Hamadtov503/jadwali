@@ -85,6 +85,20 @@ enum SchoolCalendar {
         return f
     }()
 
+    /// عنوان الأسبوع الذي يقع فيه التاريخ: «الأسبوع ١٣» وتحته الفصل وتاريخ الأحد إلى الخميس.
+    static func weekTitle(for ref: Date) -> (title: String, sub: String) {
+        let sunday = Weekdays.date(of: 0, from: ref)
+        let thursday = Weekdays.date(of: 4, from: ref)
+        let range = dayRange(sunday, thursday)
+        if let w = week(on: sunday) {
+            return ("الأسبوع \(Fmt.n(w.number))", "\(w.semester) · \(range)")
+        }
+        if let h = holiday(on: sunday) ?? holiday(on: thursday) {
+            return (h.name, range)
+        }
+        return ("خارج العام الدراسي", range)
+    }
+
     private static let dayOnly: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "ar_SA@calendar=gregorian")

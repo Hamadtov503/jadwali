@@ -128,21 +128,7 @@ struct WeekView: View {
 
     /// «الأسبوع ١٣» مع الفصل وتاريخ الأسبوع، وأسهم للتنقل.
     private var weekHeader: some View {
-        let sunday = Weekdays.date(of: 0, from: refDate)
-        let thursday = Weekdays.date(of: 4, from: refDate)
-        let range = SchoolCalendar.dayRange(sunday, thursday)
-        let title: String
-        let sub: String
-        if let w = SchoolCalendar.week(on: sunday) {
-            title = "الأسبوع \(Fmt.n(w.number))"
-            sub = "\(w.semester) · \(range)"
-        } else if let h = SchoolCalendar.holiday(on: sunday) ?? SchoolCalendar.holiday(on: thursday) {
-            title = h.name
-            sub = range
-        } else {
-            title = "خارج العام الدراسي"
-            sub = range
-        }
+        let (title, sub) = SchoolCalendar.weekTitle(for: refDate)
         return HStack(spacing: 8) {
             navButton("chevron.right", label: "الأسبوع السابق") { changeWeek(-1) }
             Spacer(minLength: 0)
