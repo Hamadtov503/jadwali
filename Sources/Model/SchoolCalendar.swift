@@ -25,7 +25,7 @@ enum SchoolCalendar {
 
     static let holidays: [Span] = [
         Span(name: "إجازة اليوم الوطني", start: day(2026, 9, 23), end: day(2026, 9, 24)),
-        Span(name: "إجازة الخريف", start: day(2026, 11, 20), end: day(2026, 11, 28)),
+        Span(name: "إجازة الخريف", start: day(2026, 11, 20), end: day(2026, 11, 29)),
         Span(name: "إجازة منتصف العام", start: day(2027, 1, 8), end: day(2027, 1, 16)),
         Span(name: "إجازة يوم التأسيس", start: day(2027, 2, 21), end: day(2027, 2, 22)),
         Span(name: "إجازة عيد الفطر", start: day(2027, 2, 25), end: day(2027, 3, 13)),
