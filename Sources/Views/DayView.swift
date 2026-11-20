@@ -65,20 +65,7 @@ struct DayView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    HStack {
-                        WeekCaption(date: Weekdays.date(of: selectedDay, from: refDate))
-                        if weekOffset != 0 {
-                            Button(action: backToThisWeek) {
-                                Text("هذا الأسبوع")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 4)
-                                    .background(Capsule().fill(Theme.deepBrown))
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
+                    WeekCaption(date: Weekdays.date(of: selectedDay, from: refDate))
                     ZStack {
                         DayStrip(selectedDay: dayBinding, today: today, ref: refDate)
                             .id(weekOffset)
