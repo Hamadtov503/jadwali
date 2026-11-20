@@ -25,7 +25,8 @@ struct LaunchContainer: View {
 /// حتى لا يتحرك شيء عند الانتقال من شاشة النظام إلى التطبيق.
 struct SplashView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var dotsFloating = false
+    @State private var activeDot = 0
+    private let dotTimer = Timer.publish(every: 0.24, on: .main, in: .common).autoconnect()
 
     var body: some View {
         ZStack {
@@ -41,13 +42,20 @@ struct SplashView: View {
                 .offset(y: 104)
             Image("SplashDots")
                 .frame(width: 36, height: 8)
-                .offset(y: 142 + (dotsFloating ? -4 : 0))
-                .opacity(dotsFloating ? 0.7 : 1)
-                .onAppear {
-                    guard !reduceMotion else { return }
-                    withAnimation(.easeInOut(duration: 0.65).repeatForever(autoreverses: true)) {
-                        dotsFloating = true
+                .mask {
+                    HStack(spacing: 0) {
+                        ForEach(0..<3, id: \.self) { index in
+                            Rectangle()
+                                .opacity(reduceMotion || activeDot == index ? 1 : 0.25)
+                                .frame(width: 12, height: 8)
+                        }
                     }
+                    .frame(width: 36, height: 8)
+                }
+                .offset(y: 142)
+                .onReceive(dotTimer) { _ in
+                    guard !reduceMotion else { return }
+                    activeDot = (activeDot + 1) % 3
                 }
         }
         .ignoresSafeArea()
