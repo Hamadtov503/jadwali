@@ -141,23 +141,6 @@ struct WeekView: View {
                     .foregroundColor(Theme.onBg.opacity(0.65))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                if weekOffset != 0 {
-                    Button {
-                        forward = weekOffset < 0
-                        DispatchQueue.main.async {
-                            withAnimation(.spring(response: 0.42, dampingFraction: 0.88)) { weekOffset = 0 }
-                        }
-                    } label: {
-                        Text("هذا الأسبوع")
-                            .font(.caption.weight(.semibold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 4)
-                            .background(Capsule().fill(Theme.deepBrown))
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.top, 2)
-                }
             }
             Spacer(minLength: 0)
             navButton("chevron.left", label: "الأسبوع التالي") { changeWeek(1) }
