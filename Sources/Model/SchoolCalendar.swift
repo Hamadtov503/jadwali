@@ -99,6 +99,61 @@ enum SchoolCalendar {
         return ("خارج العام الدراسي", range)
     }
 
+    /// يوم دراسة فعلي من الأحد إلى الخميس.
+    static func isSchoolDay(_ date: Date) -> Bool {
+        Weekdays.weekday(of: date) <= 4 && isStudyDay(date)
+    }
+
+    /// عدد أيام الدراسة من تاريخ إلى نهاية الفصل (يشمل اليوم نفسه).
+    static func studyDaysLeft(from date: Date, to end: Date) -> Int {
+        let cal = Weekdays.calendar
+        var d = cal.startOfDay(for: date)
+        var n = 0
+        while d <= end {
+            if isSchoolDay(d) { n += 1 }
+            guard let next = cal.date(byAdding: .day, value: 1, to: d) else { break }
+            d = next
+        }
+        return n
+    }
+
+    /// عدد الأسابيع الدراسية في الفصل.
+    static func totalWeeks(in s: Span) -> Int {
+        week(on: lastStudyDay(in: s))?.number ?? 0
+    }
+
+    private static func lastStudyDay(in s: Span) -> Date {
+        let cal = Weekdays.calendar
+        var d = s.end
+        while d > s.start, !isSchoolDay(d) {
+            d = cal.date(byAdding: .day, value: -1, to: d) ?? s.start
+        }
+        return d
+    }
+
+    /// الفصل الحالي أو القادم.
+    static func currentOrNextSemester(_ date: Date) -> Span? {
+        let d = Weekdays.calendar.startOfDay(for: date)
+        return semesters.first { d <= $0.end }
+    }
+
+    /// آخر أسبوع دراسي مرّ حتى هذا التاريخ (مفيد أثناء الإجازات).
+    static func weeksDone(in s: Span, by date: Date) -> Int {
+        let cal = Weekdays.calendar
+        var d = min(cal.startOfDay(for: date), s.end)
+        while d >= s.start {
+            if isSchoolDay(d), let w = week(on: d) { return w.number }
+            d = cal.date(byAdding: .day, value: -1, to: d) ?? s.start
+            if d < s.start { break }
+        }
+        return 0
+    }
+
+    static func daysBetween(_ a: Date, _ b: Date) -> Int {
+        let cal = Weekdays.calendar
+        return cal.dateComponents([.day], from: cal.startOfDay(for: a), to: cal.startOfDay(for: b)).day ?? 0
+    }
+
     private static let dayOnly: DateFormatter = {
         let f = DateFormatter()
         f.locale = Locale(identifier: "ar_SA@calendar=gregorian")

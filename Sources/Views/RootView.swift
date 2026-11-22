@@ -20,6 +20,7 @@ struct RootView: View {
     @State private var showSettings = false
     @State private var assigning: AssignTarget?
     @State private var showProfile = false
+    @State private var showCalendar = false
     @State private var confirmClear = false
     @AppStorage("userName") private var userName = ""
     @Namespace private var modeNS
@@ -99,6 +100,13 @@ struct RootView: View {
                     .accentColor(Theme.deepBrown)
             }
         )
+        .overlay(
+            Color.clear.sheet(isPresented: $showCalendar) {
+                SchoolCalendarView()
+                    .environment(\.locale, Fmt.locale)
+                    .accentColor(Theme.deepBrown)
+            }
+        )
         .sheet(item: $editing) { target in
             EditorView(target: target)
                 .environmentObject(store)
@@ -127,6 +135,7 @@ struct RootView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("الملف الشخصي")
+                    circleButton("calendar", label: "التقويم الدراسي") { showCalendar = true }
                     circleButton("gearshape", label: "الإعدادات") { showSettings = true }
                 }
             }
