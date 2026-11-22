@@ -45,7 +45,7 @@ struct SettingsView: View {
         NavigationView {
             Form {
  Group {
-                Section(header: SectionTitle("المواد الدراسية")) {
+                Section(header: titleWithAdd("المواد الدراسية") { addSubjectAtEnd() }) {
                     ForEach($subjects) { $row in
                         HStack(spacing: 12) {
                             SettingIcon(name: "book.fill", color: Theme.blue)
@@ -53,9 +53,6 @@ struct SettingsView: View {
                                 .focused($focused, equals: row.id)
                                 .submitLabel(.next)
                                 .onSubmit { insertSubject(after: row.id) }
-                            if row.id == subjects.last?.id {
-                                addButton { insertSubject(after: row.id) }
-                            }
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) { deleteSubject(row.id) } label: {
@@ -65,7 +62,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section(header: SectionTitle("الفصول")) {
+                Section(header: titleWithAdd("الفصول") { addClassAtEnd() }) {
                     ForEach($s.classes) { $c in
                         HStack(spacing: 12) {
                             Button { editingClass = ClassRef(id: c.id) } label: {
@@ -77,9 +74,6 @@ struct SettingsView: View {
                                 .focused($focused, equals: c.id)
                                 .submitLabel(.next)
                                 .onSubmit { insertClass(after: c.id) }
-                            if c.id == s.classes.last?.id {
-                                addButton { insertClass(after: c.id) }
-                            }
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                             Button(role: .destructive) { deleteClass(c.id) } label: {
@@ -261,6 +255,34 @@ struct SettingsView: View {
     }
 
     // MARK: - Rows
+
+    /// عنوان القسم وعلى طرفه الآخر علامة الزائد.
+    private func titleWithAdd(_ title: String, _ action: @escaping () -> Void) -> some View {
+        HStack {
+            SectionTitle(title)
+            Spacer()
+            Button(action: action) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 22))
+                    .foregroundColor(Theme.deepBrown)
+                    .frame(width: 36, height: 30)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.borderless)
+            .accessibilityLabel("إضافة \(title)")
+        }
+    }
+
+    /// يضيف سطرًا فارغًا في آخر القائمة، أو يفتح السطر الأخير إن كان فارغًا.
+    private func addSubjectAtEnd() {
+        guard let last = subjects.last else { return }
+        if trimmed(last.name).isEmpty { focused = last.id } else { insertSubject(after: last.id) }
+    }
+
+    private func addClassAtEnd() {
+        guard let last = s.classes.last else { return }
+        if trimmed(last.name).isEmpty { focused = last.id } else { insertClass(after: last.id) }
+    }
 
     private func addButton(_ action: @escaping () -> Void) -> some View {
         Button(action: action) {
