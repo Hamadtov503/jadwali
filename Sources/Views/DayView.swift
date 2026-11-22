@@ -3,6 +3,7 @@ import SwiftUI
 struct DayView: View {
     @EnvironmentObject var store: Store
     @Binding var selectedDay: Int
+    var onCalendar: () -> Void = {}
     @State private var forward = true
     @State private var weekOffset = 0
 
@@ -65,7 +66,18 @@ struct DayView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    WeekCaption(date: Weekdays.date(of: selectedDay, from: refDate))
+                    HStack(alignment: .center, spacing: 10) {
+                        WeekCaption(date: Weekdays.date(of: selectedDay, from: refDate))
+                        Button(action: onCalendar) {
+                            Image(systemName: "calendar")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(Theme.fg)
+                                .frame(width: 42, height: 42)
+                                .background(Circle().fill(Theme.surface2))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("التقويم الدراسي")
+                    }
                     ZStack {
                         DayStrip(selectedDay: dayBinding, today: today, ref: refDate)
                             .id(weekOffset)

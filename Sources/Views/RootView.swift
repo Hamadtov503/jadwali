@@ -51,7 +51,7 @@ struct RootView: View {
 
                 ZStack {
                     if mode == .day {
-                        DayView(selectedDay: $selectedDay)
+                        DayView(selectedDay: $selectedDay, onCalendar: { showCalendar = true })
                             .id("day-page")
                             .transition(.move(edge: .leading))
                     } else {
@@ -135,7 +135,6 @@ struct RootView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("الملف الشخصي")
-                    circleButton("calendar", label: "التقويم الدراسي") { showCalendar = true }
                     circleButton("gearshape", label: "الإعدادات") { showSettings = true }
                 }
             }
